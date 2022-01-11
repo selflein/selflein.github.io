@@ -8,3 +8,5 @@ permalink: /about
 
 {% bibliography --file own %}
 
+(* denotes equal contribution)
+

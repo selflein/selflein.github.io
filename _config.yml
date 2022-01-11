@@ -25,7 +25,7 @@ description:	       'Machine Learning and Stuff.'
 author:              'Sven Elflein'
 
 scholar:
-  style: modern-language-association
+  style: "https://raw.githubusercontent.com/citation-style-language/styles/master/acm-siggraph.csl"
 
 # RSS 2.0 can be used instead of Atom by uncommenting following two lines
 #feed:
