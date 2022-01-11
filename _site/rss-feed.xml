@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/">
+	<channel>
+		<title>Dies, Das, Ananas</title>
+		<description>Machine Learning and Stuff.</description>
+		<link></link>
+		<atom:link href="/rss-feed.xml" rel="self" type="application/rss+xml" />
+		
+			<item>
+				<title>Learning distributions on compact support using Normalizing Flows</title>
+				
+				
+					<description>&lt;p&gt;Normalizing Flows &lt;a class=&quot;citation&quot; href=&quot;#pmlr-v37-rezende15&quot;&gt;[Rezende and Mohamed 2015]&lt;/a&gt; are powerful density estimators that have shown to be able to learn complex distributions, e.g., of natural images &lt;a class=&quot;citation&quot; href=&quot;#NEURIPS2018-d139db6a&quot;&gt;[Kingma and Dhariwal 2018]&lt;/a&gt;.&lt;/p&gt;
+</description>
+				
+				<pubDate>Mon, 10 Jan 2022 00:00:00 +0100</pubDate>
+				<link>/normalizing_flow_bounded_domain</link>
+				<guid isPermaLink="true">/normalizing_flow_bounded_domain</guid>
+			</item>
+		
+			<item>
+				<title>Why did my Neural Network do that?</title>
+				
+				
+					<description>&lt;p&gt;This is a blog post about the paper “Restricting the Flow: Information Bottlenecks for Attribution” by Karl Schulz, Leon Sixt, Federico Tombari and Tim Landgraf published at ICLR 2020.&lt;/p&gt;
+
+&lt;h2 id=&quot;introduction&quot;&gt;Introduction&lt;/h2&gt;
+&lt;p&gt;With the current trend to applying Neural Networks to more and more domains, the question on the explainability of these models is getting more attention. While more traditional machine learning approaches like decision trees and Random Forest incorporate some kind of interpretability based on the input features, todays Deep Neural Networks rely on higher dimensional embeddings hardly interpretable by a human. The line of research which can be grouped under the “Attribution” term therefore tries to relate the final output of a Neural Network back to its input by identifying the parts most relevant for decision of the model.&lt;/p&gt;
+</description>
+				
+				<pubDate>Wed, 12 Aug 2020 00:00:00 +0200</pubDate>
+				<link>/restricting-the-flow-review</link>
+				<guid isPermaLink="true">/restricting-the-flow-review</guid>
+			</item>
+		
+	</channel>
+</rss>
