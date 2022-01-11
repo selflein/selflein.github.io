@@ -13,13 +13,15 @@
 */
 
 .thumbnail-container {
-  max-width: 100%;
+  max-width: 80%;
   overflow: hidden;
   border-radius: 5px;
-  margin-bottom: 25px;
+  margin-bottom: 15px;
 }
 
 .thumbnail-container img{
+  width: 100%;
+  margin: 0 auto;
   margin-top: -11.5%;
   margin-bottom: -11.5%;
 }
