@@ -218,7 +218,7 @@ We can also inspect the (negative) direction of the predicted noise vector at a 
 
 {% include image.html url="../assets/img/diffusion_practical_guide_files/vectorfield.png" description="Figure 4: Vector field describing reverse process dynamics at different timestamps. The blue line shows the trajectory of a sample during the reverse process." width="100%" %}
 
-One can see that as $t \rightarrow 0$ more fine-grained structure emerges that guides the sample to the original data manifold. At $t=T$ there the (pure) noise is just guided towards the center as the signal is still very low for the network to predict.
+One can see that as $t \rightarrow 0$ more fine-grained structure emerges that guides the sample to the original data manifold. At $t=T$ samples are guided coarsely towards the center as the signal is still very noisy and hard for the network to predict.
 
 
 ## Insights
