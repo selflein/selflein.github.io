@@ -123,6 +123,8 @@ pre.highlight { white-space: pre; overflow-x: auto; }
 
 .related-posts a { text-decoration: none; }
 
+.centerimg { display: block; margin-left: auto; margin-right: auto; }
+
 /* Social media icons */
 .sharing-icons a { padding-right: 10px; }
 

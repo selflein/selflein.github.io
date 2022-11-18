@@ -1,4 +1,255 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="4.2.1">Jekyll</generator><link href="/feed.xml" rel="self" type="application/atom+xml" /><link href="/" rel="alternate" type="text/html" /><updated>2022-01-11T01:47:48+01:00</updated><id>/feed.xml</id><title type="html">Dies, Das, Ananas</title><subtitle>Machine Learning and Stuff.</subtitle><author><name>Sven Elflein</name></author><entry><title type="html">Learning distributions on compact support using Normalizing Flows</title><link href="/normalizing_flow_bounded_domain" rel="alternate" type="text/html" title="Learning distributions on compact support using Normalizing Flows" /><published>2022-01-10T00:00:00+01:00</published><updated>2022-01-10T00:00:00+01:00</updated><id>/normalizing_flow_bounded_domain</id><content type="html" xml:base="/normalizing_flow_bounded_domain"><![CDATA[<p>Normalizing Flows <a class="citation" href="#pmlr-v37-rezende15">[Rezende and Mohamed 2015]</a> are powerful density estimators that have shown to be able to learn complex distributions, e.g., of natural images <a class="citation" href="#NEURIPS2018-d139db6a">[Kingma and Dhariwal 2018]</a>.</p>
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="4.2.1">Jekyll</generator><link href="http://localhost:4000/feed.xml" rel="self" type="application/atom+xml" /><link href="http://localhost:4000/" rel="alternate" type="text/html" /><updated>2022-11-18T17:13:09+01:00</updated><id>http://localhost:4000/feed.xml</id><title type="html">Dies, Das, Ananas</title><subtitle>Machine Learning and Stuff.</subtitle><author><name>Sven Elflein</name></author><entry><title type="html">Practical guide to Diffusion models</title><link href="http://localhost:4000/diffusion_practical_guide" rel="alternate" type="text/html" title="Practical guide to Diffusion models" /><published>2022-11-18T00:00:00+01:00</published><updated>2022-11-18T00:00:00+01:00</updated><id>http://localhost:4000/diffusion_practical_guide</id><content type="html" xml:base="http://localhost:4000/diffusion_practical_guide"><![CDATA[<p>The motivation of this blog post is to provide a intuition and a practical guide to train a (simple) diffusion model <a class="citation" href="#sohl2015deep">[Sohl-Dickstein et al. 2015]</a> together with the respective code leveraging PyTorch. If you are interested in a more mathematical description with proofs I can highly recommend <a class="citation" href="#luoUnderstandingDiffusionModels2022a">[Luo 2022]</a>.</p>
+
+<p>In general, the goal of a diffusion model is to be able to generate novel data after being trained on data points of that distribution.</p>
+
+<p>Here, let’s consider a simple 2D toy dataset provided by scikit-learn to make this example as simple as possible:</p>
+
+<figure class="image">
+    <img src="../assets/img/diffusion_practical_guide_files/dataset.png" alt="Figure 1: Two Moons toy dataset used for our experiments." width="50%" class="centerimg" />
+    <figcaption>
+        Figure 1: Two Moons toy dataset used for our experiments.
+    </figcaption>
+</figure>
+
+<p>Diffusion models define a forward and backward process:</p>
+
+<ul>
+  <li>the forward process gradually adds noise to the data until the original data is indistinguishable (one arrives at a standard normal distribution $N(0, \mathbf{I})$)</li>
+  <li>the backward process aims to reverse the forward process, i.e., start from noise and then gradually try to restore data</li>
+</ul>
+
+<p>One aims to learn the backward process, so one can generate new samples by starting from random noise.</p>
+
+<p>To be able to start training a model that learns this backward process, we need to know how to do the forward process one aims to reverse.</p>
+
+<p>The Gaussian noise one adds at every step $t$ is controlled by parameters $\beta_t$ that increase as $t \rightarrow T$ so we get random Gaussian noise in the end:</p>
+
+\[\begin{equation}
+q(x_t \mid x_{t-1}) \sim \mathcal{N}(\sqrt{1 - \beta_t}x_{t-1}, \beta_t \mathbf{I})
+\end{equation}\]
+
+<p>So one can start from our original data samples $x_0$ and then gradually adds noise to the samples.</p>
+
+<figure class="image">
+    <img src="../assets/img/diffusion_practical_guide_files/forward_diffusion.png" alt="Figure 2: Forward diffusion process that gradually adds noise." width="110%" class="centerimg" />
+    <figcaption>
+        Figure 2: Forward diffusion process that gradually adds noise.
+    </figcaption>
+</figure>
+
+<p>The cool thing about this being Gaussian noise is that instead of simulating this forward process by iteratively sampling noise, one can derive a closed form for the distribution at a certain $t$ given the original data point $x_0$ so one has to only sample noise once:</p>
+
+\[\begin{equation}
+q(x_t \mid x_0) \sim \mathcal{N}(\sqrt{\bar{\alpha}}_t x_0, (1 - \bar{\alpha}_t)\mathbf{I})
+\end{equation}\]
+
+<p>with $\alpha_t = 1 - \beta_t$ and $\bar{\alpha}_t = \prod_{s = 1}^t \alpha_s$.</p>
+
+<p>Let’s implement this:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">ForwardProcess</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">betas</span><span class="p">:</span> <span class="n">torch</span><span class="p">.</span><span class="n">Tensor</span><span class="p">):</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">beta</span> <span class="o">=</span> <span class="n">betas</span>
+
+        <span class="bp">self</span><span class="p">.</span><span class="n">alphas</span> <span class="o">=</span> <span class="mf">1.</span> <span class="o">-</span> <span class="n">betas</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">alpha_bar</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">cumprod</span><span class="p">(</span><span class="bp">self</span><span class="p">.</span><span class="n">alphas</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+
+
+    <span class="k">def</span> <span class="nf">get_x_t</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x_0</span><span class="p">:</span> <span class="n">torch</span><span class="p">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">t</span><span class="p">:</span> <span class="n">torch</span><span class="p">.</span><span class="n">LongTensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">torch</span><span class="p">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">torch</span><span class="p">.</span><span class="n">Tensor</span><span class="p">]:</span>
+        <span class="s">"""Forward diffusion process given the unperturbed sample x_0.
+        
+        Args:
+            x_0: Original, unperturbed samples.
+            t: Target timestamp of the diffusion process of each sample.
+        
+        Returns:
+            Noise added to original sample and perturbed sample.
+        """</span>
+        <span class="n">eps_0</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">randn_like</span><span class="p">(</span><span class="n">x_0</span><span class="p">).</span><span class="n">to</span><span class="p">(</span><span class="n">x_0</span><span class="p">)</span>
+        <span class="n">alpha_bar</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">alpha_bar</span><span class="p">[</span><span class="n">t</span><span class="p">,</span> <span class="bp">None</span><span class="p">]</span>
+        <span class="n">mean</span> <span class="o">=</span> <span class="p">(</span><span class="n">alpha_bar</span> <span class="o">**</span> <span class="mf">0.5</span><span class="p">)</span> <span class="o">*</span> <span class="n">x_0</span>
+        <span class="n">std</span> <span class="o">=</span> <span class="p">((</span><span class="mf">1.</span> <span class="o">-</span> <span class="n">alpha_bar</span><span class="p">)</span> <span class="o">**</span> <span class="mf">0.5</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="p">(</span><span class="n">eps_0</span><span class="p">,</span> <span class="n">mean</span> <span class="o">+</span> <span class="n">std</span> <span class="o">*</span> <span class="n">eps_0</span><span class="p">)</span>
+</code></pre></div></div>
+
+<h3 id="training">Training</h3>
+<p>Next, we want to train a model that reverses that process.</p>
+
+<p>For this, one can show that the there is also a closed form for the less noisy version $x_{t-1}$ given the next sample $x_t$ and the original sample $x_0$.</p>
+
+\[\tag{1}\label{eq:reverse}
+\begin{equation}
+q(x_{t-1} \mid x_t, x_0) = \mathcal{N}(\mu(x_t, x_0), \sigma_t^2\mathbf{I}
+\end{equation}\]
+
+<p>where</p>
+
+\[\begin{equation}
+\sigma_t^2 = \frac{(1 - \alpha_t)(1 - \bar{\alpha}_{t-1})}{1 - \bar{\alpha}_t}, \quad \mu(x_t, x_0) = \frac{1}{\sqrt{\alpha_t}} \left(x_t - \frac{1 - \alpha_t}{\sqrt{1 - \bar{\alpha}_t}} \epsilon_0\right)
+\end{equation}\]
+
+<p>and $\epsilon_0 \sim \mathcal{N}(0, \mathbf{I})$ is the noise drawn to perturb the original data $x_0$<sup id="fnref:1" role="doc-noteref"><a href="#fn:1" class="footnote" rel="footnote">1</a></sup>.</p>
+
+<p>Obviously, we cannot use this directly to generate new data since this relies on knowing the original datapoint $x_0$ in the first place but <strong>we can use it to generate the ground truth data for training a model that does not rely on $\mathbf{x}_0$ and predicts $\epsilon_0$ from the noisy data $\mathbf{x}_t$ and $t$ alone</strong><sup id="fnref:2" role="doc-noteref"><a href="#fn:2" class="footnote" rel="footnote">2</a></sup>.</p>
+
+<p>Let’s define a small neural network $\epsilon_{\mathbf{\theta}}(\mathbf{x}_t, t)$ where $\mathbf{\theta}$ are the parameters of the network that does just that:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">NoisePredictor</span><span class="p">(</span><span class="n">nn</span><span class="p">.</span><span class="n">Module</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">T</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">().</span><span class="n">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">T</span> <span class="o">=</span> <span class="n">T</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">t_encoder</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">T</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        
+        <span class="bp">self</span><span class="p">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="n">Sequential</span><span class="p">(</span>
+            <span class="n">nn</span><span class="p">.</span><span class="n">Linear</span><span class="p">(</span><span class="mi">2</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">100</span><span class="p">),</span>   <span class="c1"># Input: Noisy data x_t and t
+</span>            <span class="n">nn</span><span class="p">.</span><span class="n">LeakyReLU</span><span class="p">(</span><span class="n">inplace</span><span class="o">=</span><span class="bp">True</span><span class="p">),</span>
+            <span class="n">nn</span><span class="p">.</span><span class="n">Linear</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="mi">100</span><span class="p">),</span>
+            <span class="n">nn</span><span class="p">.</span><span class="n">LeakyReLU</span><span class="p">(</span><span class="n">inplace</span><span class="o">=</span><span class="bp">True</span><span class="p">),</span>
+            <span class="n">nn</span><span class="p">.</span><span class="n">Linear</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="mi">100</span><span class="p">),</span>
+            <span class="n">nn</span><span class="p">.</span><span class="n">LeakyReLU</span><span class="p">(</span><span class="n">inplace</span><span class="o">=</span><span class="bp">True</span><span class="p">),</span>
+            <span class="n">nn</span><span class="p">.</span><span class="n">Linear</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="mi">20</span><span class="p">),</span>
+            <span class="n">nn</span><span class="p">.</span><span class="n">LeakyReLU</span><span class="p">(</span><span class="n">inplace</span><span class="o">=</span><span class="bp">True</span><span class="p">),</span>
+            <span class="c1"># Output: Predicted noise that was added to the original data point
+</span>            <span class="n">nn</span><span class="p">.</span><span class="n">Linear</span><span class="p">(</span><span class="mi">20</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x_t</span><span class="p">,</span> <span class="n">t</span><span class="p">):</span>
+        <span class="c1"># Encode the time index t as one-hot and then use one layer to encode
+</span>        <span class="c1"># into a single value
+</span>        <span class="n">t_embedding</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">t_encoder</span><span class="p">(</span>
+            <span class="n">nn</span><span class="p">.</span><span class="n">functional</span><span class="p">.</span><span class="n">one_hot</span><span class="p">(</span><span class="n">t</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">num_classes</span><span class="o">=</span><span class="bp">self</span><span class="p">.</span><span class="n">T</span><span class="p">).</span><span class="n">to</span><span class="p">(</span><span class="n">torch</span><span class="p">.</span><span class="nb">float</span><span class="p">)</span>
+        <span class="p">)</span>
+        
+        <span class="n">inp</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">cat</span><span class="p">([</span><span class="n">x_t</span><span class="p">,</span> <span class="n">t_embedding</span><span class="p">],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="p">.</span><span class="n">model</span><span class="p">(</span><span class="n">inp</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p>Here, we encode the timestamp of the diffusion process $t$ as a one-hot vector with a single layer and then concatenate this information with the noisy data.</p>
+
+<p><strong>Next up</strong>: Training the model to predict the noise. 
+For this, one can just sample $t$’s, use the forward process to generate the noisy sample $x_t$ together with the noise $e_0$, and train the model to reduce the mean squared error between the predicted noise and $e_0$.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">model</span> <span class="o">=</span> <span class="n">NoisePredictor</span><span class="p">(</span><span class="n">T</span><span class="o">=</span><span class="n">T</span><span class="p">)</span>
+<span class="n">optimizer</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">optim</span><span class="p">.</span><span class="n">AdamW</span><span class="p">(</span><span class="n">params</span><span class="o">=</span><span class="n">model</span><span class="p">.</span><span class="n">parameters</span><span class="p">(),</span> <span class="n">lr</span><span class="o">=</span><span class="mf">1e-2</span><span class="p">,</span> <span class="n">betas</span><span class="o">=</span><span class="p">(</span><span class="mf">0.9</span><span class="p">,</span> <span class="mf">0.999</span><span class="p">),</span> <span class="n">weight_decay</span><span class="o">=</span><span class="mf">1e-4</span><span class="p">)</span>
+
+<span class="n">N</span> <span class="o">=</span> <span class="n">X</span><span class="p">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+<span class="k">for</span> <span class="n">epoch</span> <span class="ow">in</span> <span class="n">trange</span><span class="p">(</span><span class="mi">5000</span><span class="p">):</span>
+    <span class="k">with</span> <span class="n">torch</span><span class="p">.</span><span class="n">no_grad</span><span class="p">():</span>
+        <span class="c1"># Sample random t's
+</span>        <span class="n">t</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">randint</span><span class="p">(</span><span class="n">low</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">high</span><span class="o">=</span><span class="n">T</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="n">N</span><span class="p">,))</span>
+
+        <span class="c1"># Get the noise added and the noisy version of the data using the forward
+</span>        <span class="c1"># process given t
+</span>        <span class="n">eps_0</span><span class="p">,</span> <span class="n">x_t</span> <span class="o">=</span> <span class="n">fp</span><span class="p">.</span><span class="n">get_x_t</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="n">t</span><span class="p">)</span>
+    
+    <span class="c1"># Predict the noise added to x_0 from x_t
+</span>    <span class="n">pred_eps</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">x_t</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span>
+
+    <span class="c1"># Simplified objective without weighting with alpha terms (Ho et al, 2020)
+</span>    <span class="n">loss</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">nn</span><span class="p">.</span><span class="n">functional</span><span class="p">.</span><span class="n">mse_loss</span><span class="p">(</span><span class="n">pred_eps</span><span class="p">,</span> <span class="n">eps_0</span><span class="p">)</span>
+
+    <span class="n">loss</span><span class="p">.</span><span class="n">backward</span><span class="p">()</span>
+    <span class="n">optimizer</span><span class="p">.</span><span class="n">step</span><span class="p">()</span>
+    <span class="n">optimizer</span><span class="p">.</span><span class="n">zero_grad</span><span class="p">()</span>
+</code></pre></div></div>
+
+<h3 id="inference">Inference</h3>
+<p>After training the model to predict the noise $\epsilon$, we can simply iteratively run the reverse process to predict $\mathbf{x}_{t-1}$ from $x_t$ starting from random noise $\mathbf{x}_T \sim \mathcal{N}(0, \mathbf{I})$ as defined in \eqref{eq:reverse} where we set the mean:</p>
+
+\[\begin{equation}
+\mu(x_t) = \frac{1}{\sqrt{\alpha_t}} \left(x_t - \frac{1 - \alpha_t}{\sqrt{1 - \bar{\alpha}_t}} \epsilon_{\mathbf{\theta}}(\mathbf{x}_t, t) \right)
+\end{equation}\]
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">ReverseProcess</span><span class="p">(</span><span class="n">ForwardProcess</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">betas</span><span class="p">:</span> <span class="n">torch</span><span class="p">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n">nn</span><span class="p">.</span><span class="n">Module</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">().</span><span class="n">__init__</span><span class="p">(</span><span class="n">betas</span><span class="p">)</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">model</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">T</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">betas</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
+
+        <span class="bp">self</span><span class="p">.</span><span class="n">sigma</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="bp">self</span><span class="p">.</span><span class="n">alphas</span><span class="p">)</span>
+            <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">torch</span><span class="p">.</span><span class="n">roll</span><span class="p">(</span><span class="bp">self</span><span class="p">.</span><span class="n">alpha_bar</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="bp">self</span><span class="p">.</span><span class="n">alpha_bar</span><span class="p">)</span>
+        <span class="p">)</span> <span class="o">**</span> <span class="mf">0.5</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">sigma</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.</span>
+    
+    <span class="k">def</span> <span class="nf">get_x_t_minus_one</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x_t</span><span class="p">:</span> <span class="n">torch</span><span class="p">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">t</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="p">.</span><span class="n">Tensor</span><span class="p">:</span>
+        <span class="k">with</span> <span class="n">torch</span><span class="p">.</span><span class="n">no_grad</span><span class="p">():</span>
+            <span class="n">t_vector</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">full</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">x_t</span><span class="p">),),</span> <span class="n">fill_value</span><span class="o">=</span><span class="n">t</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="p">.</span><span class="nb">long</span><span class="p">)</span>
+            <span class="n">eps</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">model</span><span class="p">(</span><span class="n">x_t</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="n">t_vector</span><span class="p">)</span>
+        
+        <span class="n">eps</span> <span class="o">*=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="bp">self</span><span class="p">.</span><span class="n">alphas</span><span class="p">[</span><span class="n">t</span><span class="p">])</span> <span class="o">/</span> <span class="p">((</span><span class="mi">1</span> <span class="o">-</span> <span class="bp">self</span><span class="p">.</span><span class="n">alpha_bar</span><span class="p">[</span><span class="n">t</span><span class="p">])</span> <span class="o">**</span> <span class="mf">0.5</span><span class="p">)</span>
+        <span class="n">mean</span> <span class="o">=</span>  <span class="mi">1</span> <span class="o">/</span> <span class="p">(</span><span class="bp">self</span><span class="p">.</span><span class="n">alphas</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="o">**</span> <span class="mf">0.5</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">x_t</span> <span class="o">-</span> <span class="n">eps</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">mean</span> <span class="o">+</span> <span class="bp">self</span><span class="p">.</span><span class="n">sigma</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="o">*</span> <span class="n">torch</span><span class="p">.</span><span class="n">randn_like</span><span class="p">(</span><span class="n">x_t</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">sample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n_samples</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">full_trajectory</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="c1"># Initialize with X_T ~ N(0, I)
+</span>        <span class="n">x_t</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">randn</span><span class="p">(</span><span class="n">n_samples</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="n">trajectory</span> <span class="o">=</span> <span class="p">[</span><span class="n">x_t</span><span class="p">.</span><span class="n">clone</span><span class="p">()]</span>
+        
+        <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="p">.</span><span class="n">T</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">):</span>
+            <span class="n">x_t</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">get_x_t_minus_one</span><span class="p">(</span><span class="n">x_t</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="n">t</span><span class="p">)</span>
+            
+            <span class="k">if</span> <span class="n">full_trajectory</span><span class="p">:</span>
+                <span class="n">trajectory</span><span class="p">.</span><span class="n">append</span><span class="p">(</span><span class="n">x_t</span><span class="p">.</span><span class="n">clone</span><span class="p">())</span>
+        <span class="k">return</span> <span class="n">torch</span><span class="p">.</span><span class="n">stack</span><span class="p">(</span><span class="n">trajectory</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span> <span class="k">if</span> <span class="n">full_trajectory</span> <span class="k">else</span> <span class="n">x_t</span>
+</code></pre></div></div>
+
+<p>Now, let’s sample new data points and plot them:</p>
+
+<figure class="image">
+    <img src="../assets/img/diffusion_practical_guide_files/new_samples.png" alt="Figure 3: New samples generated from the trained diffusion model." width="50%" class="centerimg" />
+    <figcaption>
+        Figure 3: New samples generated from the trained diffusion model.
+    </figcaption>
+</figure>
+
+<p>We can also inspect the (negative) direction of the predicted noise vector at a particular timestamp $t$ for each position in a grid to visualize the dynamics a sample follows during the reverse process as a vector field:</p>
+
+<figure class="image">
+    <img src="../assets/img/diffusion_practical_guide_files/vectorfield.png" alt="Figure 4: Vector field describing reverse process dynamics at different timestamps. The blue line shows the trajectory of a sample during the reverse process." width="100%" class="centerimg" />
+    <figcaption>
+        Figure 4: Vector field describing reverse process dynamics at different timestamps. The blue line shows the trajectory of a sample during the reverse process.
+    </figcaption>
+</figure>
+
+<p>One can see that as $t \rightarrow 0$ more fine-grained structure emerges that guides the sample to the original data manifold. At $t=T$ there the (pure) noise is just guided towards the center as the signal is still very low for the network to predict.</p>
+
+<h2 id="insights">Insights</h2>
+
+<p>Working on this small dataset already revealed some important things that one has to consider when training diffusion models.
+In particular, in the beginning when I started to implement this from the paper description, a huge amount of diffusion steps ($T=1000$) were required to yield good results.</p>
+
+<p>Further looking into the literature and appendix of the papers revealed some things that brought down the diffusion steps required to $T=10$:</p>
+<ul>
+  <li>It is important to perform linear scaling of the input data into the range $[-1, 1]$. Standardizing the input data (i.e., subtracting the mean and dividing by the standard dev.) as it is usually done for neural networks yielded worse results</li>
+  <li>The Variance schedule (${\beta_t}_t$) ideally has small changes towards $t=0$ such that the noise is not too much for the network to reconstruct, i.e., it learn fine-grained details of the data. This was already discovered in <a class="citation" href="#nichol2021improved">[Nichol and Dhariwal 2021]</a>, however, it is interesting to see that his insight can be shown from a toy dataset already instead of training expensive image models. Fig. 5 shows how the variance of the forward process $1 - \bar{\alpha}_t$ evolves for when $\beta_t$ is set linear (left), or polynomial (right). The right setting works much better in practice since the perturbation of the input does not happen too fast.</li>
+</ul>
+
+<figure class="image">
+    <img src="../assets/img/diffusion_practical_guide_files/variance_schedule.png" alt="Figure 5: Different variance schedules for the diffusion process." width="100%" class="centerimg" />
+    <figcaption>
+        Figure 5: Different variance schedules for the diffusion process.
+    </figcaption>
+</figure>
+
+<p>Check out the full notebook which this blog post is based on <a href="https://gist.github.com/selflein/9bee0818a48966179b18d577a89f792a">here</a>.</p>
+
+<h2 id="references">References</h2>
+<ol class="bibliography"><li><span id="sohl2015deep"><span style="font-variant: small-caps">Sohl-Dickstein, J., Weiss, E., Maheswaranathan, N., and Ganguli, S.</span> 2015. Deep unsupervised learning using nonequilibrium thermodynamics. <i>International Conference on Machine Learning</i>, PMLR, 2256–2265.</span></li>
+<li><span id="luoUnderstandingDiffusionModels2022a"><span style="font-variant: small-caps">Luo, C.</span> 2022. Understanding Diffusion Models: A Unified Perspective. .</span></li>
+<li><span id="nichol2021improved"><span style="font-variant: small-caps">Nichol, A.Q. and Dhariwal, P.</span> 2021. Improved Denoising Diffusion Probabilistic Models. <i>International Conference on Machine Learning</i>, PMLR, 8162–8171.</span></li></ol>
+<div class="footnotes" role="doc-endnotes">
+  <ol>
+    <li id="fn:1" role="doc-endnote">
+      <p>This is one possible parameterization of the mean that is most effective based on the experiments in <a class="citation" href="#nichol2021improved">[Nichol and Dhariwal 2021]</a>. <a class="citation" href="#luoUnderstandingDiffusionModels2022a">[Luo 2022]</a> summarizes two other paramterizations in the literature, e.g., regressing the mean directly. <a href="#fnref:1" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
+    </li>
+    <li id="fn:2" role="doc-endnote">
+      <p>Here we treat the variances as fixed. <a class="citation" href="#nichol2021improved">[Nichol and Dhariwal 2021]</a> propose to learn these with an additional objective. <a href="#fnref:2" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
+    </li>
+  </ol>
+</div>]]></content><author><name>Sven Elflein</name></author><category term="Generative models" /><category term="Deep Learning" /><summary type="html"><![CDATA[The motivation of this blog post is to provide a intuition and a practical guide to train a (simple) diffusion model [Sohl-Dickstein et al. 2015] together with the respective code leveraging PyTorch. If you are interested in a more mathematical description with proofs I can highly recommend [Luo 2022].]]></summary></entry><entry><title type="html">Learning distributions on compact support using Normalizing Flows</title><link href="http://localhost:4000/normalizing_flow_bounded_domain" rel="alternate" type="text/html" title="Learning distributions on compact support using Normalizing Flows" /><published>2022-01-10T00:00:00+01:00</published><updated>2022-01-10T00:00:00+01:00</updated><id>http://localhost:4000/normalizing_flow_bounded_domain</id><content type="html" xml:base="http://localhost:4000/normalizing_flow_bounded_domain"><![CDATA[<p>Normalizing Flows <a class="citation" href="#pmlr-v37-rezende15">[Rezende and Mohamed 2015]</a> are powerful density estimators that have shown to be able to learn complex distributions, e.g., of natural images <a class="citation" href="#NEURIPS2018-d139db6a">[Kingma and Dhariwal 2018]</a>.</p>
 
 <p>Recently, I was interested in learning a distribution on line segments which only has compact support, i.e., the support is not $\mathbb{R}$ but only defined on a compact interval $[a, b]$ along the line segment.</p>
 
@@ -9,7 +260,7 @@
 <p>Consider a vanilla normalizing flow stacking a set of invertible and differentiable transformations $\{f_1, \dots, f_n \}$. After applying common transformations (e.g. radial <a class="citation" href="#pmlr-v37-rezende15">[Rezende and Mohamed 2015]</a> or affine coupling <a class="citation" href="#dinh2015nice">[Dinh et al. 2015]</a> transform) the support of the function is still $\mathbb{R}$. This is visualized in Fig. 1.</p>
 
 <figure class="image">
-    <img src="../assets/img/normalizing_flow_bounded_domain_files/nf.png" alt="Figure 1: Common normalizing flow definition transforming a latent Normal distribution into a more complex, target distribution." width=" class=center-imgs" />
+    <img src="../assets/img/normalizing_flow_bounded_domain_files/nf.png" alt="Figure 1: Common normalizing flow definition transforming a latent Normal distribution into a more complex, target distribution." width="" class="centerimg" />
     <figcaption>
         Figure 1: Common normalizing flow definition transforming a latent Normal distribution into a more complex, target distribution.
     </figcaption>
@@ -22,7 +273,7 @@
 <p>which is visualized as transformation in the first part of Fig. 2.</p>
 
 <figure class="image">
-    <img src="../assets/img/normalizing_flow_bounded_domain_files/compact_transform.png" alt="Figure 2: Two additional transforms to squash the distribution into the [0, 1] interval and scale and move it afterwards." width=" class=center-imgs" />
+    <img src="../assets/img/normalizing_flow_bounded_domain_files/compact_transform.png" alt="Figure 2: Two additional transforms to squash the distribution into the [0, 1] interval and scale and move it afterwards." width="" class="centerimg" />
     <figcaption>
         Figure 2: Two additional transforms to squash the distribution into the [0, 1] interval and scale and move it afterwards.
     </figcaption>
@@ -90,7 +341,7 @@
 <p>Now, we consider the following 1D example distribution which is a piecewise uniform with support $[1.0, 2.5]$ shown in Fig. 3.</p>
 
 <figure class="image">
-    <img src="../assets/img/normalizing_flow_bounded_domain_files/normalizing_flow_bounded_domain_11_1.png" alt="Figure 3: The target distribution we are aiming to learn on data." width="85% class=center-imgs" />
+    <img src="../assets/img/normalizing_flow_bounded_domain_files/normalizing_flow_bounded_domain_11_1.png" alt="Figure 3: The target distribution we are aiming to learn on data." width="85%" class="centerimg" />
     <figcaption>
         Figure 3: The target distribution we are aiming to learn on data.
     </figcaption>
@@ -131,7 +382,7 @@
 <p>Finally, we can plot the learned density in Fig. 4. Note that the density is only defined in the interval $[1.0, 2.5]$, however points outside the interval evaluate to $0$ due to clamping by Pyro.</p>
 
 <figure class="image">
-    <img src="../assets/img/normalizing_flow_bounded_domain_files/normalizing_flow_bounded_domain_16_1.png" alt="Figure 4: The distribution learned by our normalizing flow model." width="85% class=center-imgs" />
+    <img src="../assets/img/normalizing_flow_bounded_domain_files/normalizing_flow_bounded_domain_16_1.png" alt="Figure 4: The distribution learned by our normalizing flow model." width="85%" class="centerimg" />
     <figcaption>
         Figure 4: The distribution learned by our normalizing flow model.
     </figcaption>
@@ -147,13 +398,13 @@
 <h2 id="references">References</h2>
 <ol class="bibliography"><li><span id="pmlr-v37-rezende15"><span style="font-variant: small-caps">Rezende, D. and Mohamed, S.</span> 2015. Variational Inference with Normalizing Flows. <i>Proceedings of the 32nd International Conference on Machine Learning</i>, PMLR, 1530–1538.</span></li>
 <li><span id="NEURIPS2018-d139db6a"><span style="font-variant: small-caps">Kingma, D.P. and Dhariwal, P.</span> 2018. Glow: Generative Flow with Invertible 1x1 Convolutions. <i>Advances in Neural Information Processing Systems</i>, Curran Associates, Inc.</span></li>
-<li><span id="dinh2015nice"><span style="font-variant: small-caps">Dinh, L., Krueger, D., and Bengio, Y.</span> 2015. NICE: Non-linear Independent Components Estimation. .</span></li></ol>]]></content><author><name>Sven Elflein</name></author><category term="Density Estimation" /><category term="Deep Learning" /><summary type="html"><![CDATA[Normalizing Flows [Rezende and Mohamed 2015] are powerful density estimators that have shown to be able to learn complex distributions, e.g., of natural images [Kingma and Dhariwal 2018].]]></summary></entry><entry><title type="html">Why did my Neural Network do that?</title><link href="/restricting-the-flow-review" rel="alternate" type="text/html" title="Why did my Neural Network do that?" /><published>2020-08-12T00:00:00+02:00</published><updated>2020-08-12T00:00:00+02:00</updated><id>/restricting-the-flow-review</id><content type="html" xml:base="/restricting-the-flow-review"><![CDATA[<p>This is a blog post about the paper “Restricting the Flow: Information Bottlenecks for Attribution” by Karl Schulz, Leon Sixt, Federico Tombari and Tim Landgraf published at ICLR 2020.</p>
+<li><span id="dinh2015nice"><span style="font-variant: small-caps">Dinh, L., Krueger, D., and Bengio, Y.</span> 2015. NICE: Non-linear Independent Components Estimation. .</span></li></ol>]]></content><author><name>Sven Elflein</name></author><category term="Density Estimation" /><category term="Deep Learning" /><summary type="html"><![CDATA[Normalizing Flows [Rezende and Mohamed 2015] are powerful density estimators that have shown to be able to learn complex distributions, e.g., of natural images [Kingma and Dhariwal 2018].]]></summary></entry><entry><title type="html">Why did my Neural Network do that?</title><link href="http://localhost:4000/restricting-the-flow-review" rel="alternate" type="text/html" title="Why did my Neural Network do that?" /><published>2020-08-12T00:00:00+02:00</published><updated>2020-08-12T00:00:00+02:00</updated><id>http://localhost:4000/restricting-the-flow-review</id><content type="html" xml:base="http://localhost:4000/restricting-the-flow-review"><![CDATA[<p>This is a blog post about the paper “Restricting the Flow: Information Bottlenecks for Attribution” by Karl Schulz, Leon Sixt, Federico Tombari and Tim Landgraf published at ICLR 2020.</p>
 
 <h2 id="introduction">Introduction</h2>
 <p>With the current trend to applying Neural Networks to more and more domains, the question on the explainability of these models is getting more attention. While more traditional machine learning approaches like decision trees and Random Forest incorporate some kind of interpretability based on the input features, todays Deep Neural Networks rely on higher dimensional embeddings hardly interpretable by a human. The line of research which can be grouped under the “Attribution” term therefore tries to relate the final output of a Neural Network back to its input by identifying the parts most relevant for decision of the model.</p>
 
 <figure class="image">
-    <img src="../assets/img/restricting-the-flow-review/intro-figure.png" alt="Figure 1: Attribution map obtained for classification network." width=" class=center-imgs" />
+    <img src="../assets/img/restricting-the-flow-review/intro-figure.png" alt="Figure 1: Attribution map obtained for classification network." width="" class="centerimg" />
     <figcaption>
         Figure 1: Attribution map obtained for classification network.
     </figcaption>
@@ -182,7 +433,7 @@ I(X,Y) &amp;= H(X)-H(X|Y) \\
 <p>where \(X\), \(Y\) are random variables and \(P_X\), \(P_Y\) are the corresponding distributions. This intuitively aligns with the formula for the computation, as the entropy of  minus the entropy of \(X\) conditioned on \(Y\) and the Kullback-Leibler divergence between the joint and the product of the marginal distributions. An example explaining the concept can be found in Figure 2.</p>
 
 <figure class="image">
-    <img src="../assets/img/restricting-the-flow-review/conditional-entropy.png" alt="Figure 2: Example for the drop in uncertainty when observing a second variable indicating that the mutual information between both random variables is high. In other words, observing \(Y\) tells us something about the value \(X\) is going to take." width=" class=center-imgs" />
+    <img src="../assets/img/restricting-the-flow-review/conditional-entropy.png" alt="Figure 2: Example for the drop in uncertainty when observing a second variable indicating that the mutual information between both random variables is high. In other words, observing \(Y\) tells us something about the value \(X\) is going to take." width="" class="centerimg" />
     <figcaption>
         Figure 2: Example for the drop in uncertainty when observing a second variable indicating that the mutual information between both random variables is high. In other words, observing \(Y\) tells us something about the value \(X\) is going to take.
     </figcaption>
@@ -197,7 +448,7 @@ I(X,Y) &amp;= H(X)-H(X|Y) \\
 <p>This corresponds to minimizing the information  \(X\) and  \(Z\) share while maximizing the information  \(Z\) and  \(Y\) share (Figure 3). Overall this restricts the flow of information between  \(X\) and  \(Y\), and pushes  \(Z\) to “extract” the most important information of  \(X\) relevant to  \(Y\).</p>
 
 <figure class="image">
-    <img src="../assets/img/restricting-the-flow-review/information-bottleneck-concept.png" alt="Figure 3: Conceptual sketch of the information bottleneck where \(Z\) is the random variable used to introduce the botteneck between \(X\) and \(Y\). \(I(Y,Z)\) is to be maximized and \(I(X,Z)\) to be minimized demonstrated by the thickness of the arrows between the random variables." width=" class=center-imgs" />
+    <img src="../assets/img/restricting-the-flow-review/information-bottleneck-concept.png" alt="Figure 3: Conceptual sketch of the information bottleneck where \(Z\) is the random variable used to introduce the botteneck between \(X\) and \(Y\). \(I(Y,Z)\) is to be maximized and \(I(X,Z)\) to be minimized demonstrated by the thickness of the arrows between the random variables." width="" class="centerimg" />
     <figcaption>
         Figure 3: Conceptual sketch of the information bottleneck where \(Z\) is the random variable used to introduce the botteneck between \(X\) and \(Y\). \(I(Y,Z)\) is to be maximized and \(I(X,Z)\) to be minimized demonstrated by the thickness of the arrows between the random variables.
     </figcaption>
@@ -210,7 +461,7 @@ I(X,Y) &amp;= H(X)-H(X|Y) \\
 <p>In order to generate attribution maps the method adopts the information bottleneck for usage in general Neural Network architectures. For this a pretrained Neural Network is considered, e.g., for classification of images. The information bottleneck is then injected at some layer by perturbing the output features with noise, thus restricting the flow information through the network. This process is visualized for a Convolutional Neural Network in Figure 4.</p>
 
 <figure class="image">
-    <img src="../assets/img/restricting-the-flow-review/pipeline-overview.png" alt="Figure 4: Construction of the random variable \(Z\) in the information bottleneck within a Neural Network." width=" class=center-imgs" />
+    <img src="../assets/img/restricting-the-flow-review/pipeline-overview.png" alt="Figure 4: Construction of the random variable \(Z\) in the information bottleneck within a Neural Network." width="" class="centerimg" />
     <figcaption>
         Figure 4: Construction of the random variable \(Z\) in the information bottleneck within a Neural Network.
     </figcaption>
@@ -257,7 +508,7 @@ I(X,Y) &amp;= H(X)-H(X|Y) \\
 <p>The per-sample bottleneck independently operates on a single input image. To parameterize \(\lambda \in \mathbb{R}^{h \times w \times c}\) one employs a sigmoid activation on \(\alpha \in \mathbb{R}^{h \times w \times c}\) to ensure that the values of \(\lambda\) are in the required domain \([0, 1]\) and to avoid having to use clipping or projected gradient methods. Afterwards, blurring with a fixed Gaussian kernel is applied to prevent artifacts introduced by pooling operations within the network and ensure smoothness of the attribution mask (Figure 5). One then optimizes \(L\) by computing gradients w.r.t. and applying the Adam optimizer. While this allows the per-sample bottleneck to be integrated within an existing pre-trained network without additional training, this requires running the optimization \(\alpha\) of for every new input sample.</p>
 
 <figure class="image">
-    <img src="../assets/img/restricting-the-flow-review/per-sample-bottleneck.png" alt="Figure 5: Conceptual visualization of Per-sample bottleneck." width=" class=center-imgs" />
+    <img src="../assets/img/restricting-the-flow-review/per-sample-bottleneck.png" alt="Figure 5: Conceptual visualization of Per-sample bottleneck." width="" class="centerimg" />
     <figcaption>
         Figure 5: Conceptual visualization of Per-sample bottleneck.
     </figcaption>
@@ -267,7 +518,7 @@ I(X,Y) &amp;= H(X)-H(X|Y) \\
 <p>In the readout bottleneck a second neural network is trained to directly regress \(\alpha\) on the entire dataset while sigmoid activation and blurring remain identical to the per-sample bottleneck. The readout network takes multi-scale features from the pretrained network which are resized to the same size and processed using a series of 1x1 convolutions. It is visualized in Figure 6. This approach requires training a second network for the task, however, during inference no additional optimization is necessary.</p>
 
 <figure class="image">
-    <img src="../assets/img/restricting-the-flow-review/readout-bottleneck.png" alt="Figure 6: Conceptual visualization of Readout bottleneck." width=" class=center-imgs" />
+    <img src="../assets/img/restricting-the-flow-review/readout-bottleneck.png" alt="Figure 6: Conceptual visualization of Readout bottleneck." width="" class="centerimg" />
     <figcaption>
         Figure 6: Conceptual visualization of Readout bottleneck.
     </figcaption>
@@ -317,14 +568,14 @@ I(X,Y) &amp;= H(X)-H(X|Y) \\
 <p>The paper first qualitatively studies the effect of inserting the bottleneck at different depths within the network which is visualized for VGG-16 in the bottom row of Figure 7. As feature map sizes shrink and the estimated attribution map has the same size as the feature map, the attribution map upscaled to the original image resolution becomes less and less localized at later layers. Secondly, qualitative results for different settings of \(\beta\) are visualized in the top row of Figure 7. One can observe that for higher values of \(\beta\) less information can pass through the bottleneck and thus the attribution is more localized on the relevant input regions. However, if \(\beta\) is set to high no information is let through and no attribution map can be obtained. Figure 8 shows a visual comparison of the attribution maps produced by different methods.</p>
 
 <figure class="image">
-    <img src="../assets/img/restricting-the-flow-review/comparision_hyperparameters.png" alt="Figure 7: Top row compares attribution maps for different settings of the hyperparameter \(\beta\). Bottom row shows comparison of attribution map when inserting the bottleneck at different depths. The unit of the scale on the right of each image is bits." width=" class=center-imgs" />
+    <img src="../assets/img/restricting-the-flow-review/comparision_hyperparameters.png" alt="Figure 7: Top row compares attribution maps for different settings of the hyperparameter \(\beta\). Bottom row shows comparison of attribution map when inserting the bottleneck at different depths. The unit of the scale on the right of each image is bits." width="" class="centerimg" />
     <figcaption>
         Figure 7: Top row compares attribution maps for different settings of the hyperparameter \(\beta\). Bottom row shows comparison of attribution map when inserting the bottleneck at different depths. The unit of the scale on the right of each image is bits.
     </figcaption>
 </figure>
 
 <figure class="image">
-    <img src="../assets/img/restricting-the-flow-review/comparison_methods.png" alt="Figure 8: Comparison of attribution maps produced by baselines and the proposed approach with per-sample and readout bottleneck." width=" class=center-imgs" />
+    <img src="../assets/img/restricting-the-flow-review/comparison_methods.png" alt="Figure 8: Comparison of attribution maps produced by baselines and the proposed approach with per-sample and readout bottleneck." width="" class="centerimg" />
     <figcaption>
         Figure 8: Comparison of attribution maps produced by baselines and the proposed approach with per-sample and readout bottleneck.
     </figcaption>
@@ -340,14 +591,14 @@ I(X,Y) &amp;= H(X)-H(X|Y) \\
 <p>Sensitivity-N measures the correlation between the removed attribution mass and drop in performance of the network when randomly masking N pixels of the input image (as demonstrated conceptually in Figure 9). Intuitively, if a attribution method is performing well it should assign high attribution scores to regions relevant for the final output and when removing these parts the network performance should drop more heavily than when removing inputs with low attribution. The results for Sensitivity-N for different amounts of removed pixels and tile sizes can be found in the bottom row of Figure 10. Since when only masking tiles of size 1x1 at a time does not provide distinguishable results, the authors also add results when removing tiles of size 8x8. Here the proposed methods outperform the baselines when more than 2% of pixels are masked. The high performance of the Occlusion baseline for small amounts of replaced pixels is a result for this method exactly using the strategy of replacing pixels of a certain small tile size and measuring the drop in performance to asses the attribution score of this region.</p>
 
 <figure class="image">
-    <img src="../assets/img/restricting-the-flow-review/sensitivity-n.png" alt="Figure 9: Example of two removed tiles from a input image on the left and the respective sum of attribution removed versus the change in logit score of the target class plotted on the right. Sensitivity-N measures the correlation between both quantities when removing tiles with size of in total N pixels." width=" class=center-imgs" />
+    <img src="../assets/img/restricting-the-flow-review/sensitivity-n.png" alt="Figure 9: Example of two removed tiles from a input image on the left and the respective sum of attribution removed versus the change in logit score of the target class plotted on the right. Sensitivity-N measures the correlation between both quantities when removing tiles with size of in total N pixels." width="" class="centerimg" />
     <figcaption>
         Figure 9: Example of two removed tiles from a input image on the left and the respective sum of attribution removed versus the change in logit score of the target class plotted on the right. Sensitivity-N measures the correlation between both quantities when removing tiles with size of in total N pixels.
     </figcaption>
 </figure>
 
 <figure class="image">
-    <img src="../assets/img/restricting-the-flow-review/paper-results-sanity-check-sens-n.png" alt="Figure 10: Top row shows results of the sanity check for ResNet-50 and VGG-16. The bottom row plots Sensitivity-N results for increasing amounts of replaced pixels with tile sizes of 1x1 and 8x8." width=" class=center-imgs" />
+    <img src="../assets/img/restricting-the-flow-review/paper-results-sanity-check-sens-n.png" alt="Figure 10: Top row shows results of the sanity check for ResNet-50 and VGG-16. The bottom row plots Sensitivity-N results for increasing amounts of replaced pixels with tile sizes of 1x1 and 8x8." width="" class="centerimg" />
     <figcaption>
         Figure 10: Top row shows results of the sanity check for ResNet-50 and VGG-16. The bottom row plots Sensitivity-N results for increasing amounts of replaced pixels with tile sizes of 1x1 and 8x8.
     </figcaption>
@@ -360,7 +611,7 @@ I(X,Y) &amp;= H(X)-H(X|Y) \\
 <p>Image degradation metrics works in a similar way to Sensitivity-N however it takes a more structured approach in removing tiles from the image. The MoRF (Most Relevant First) curve (Figure 11) is computed by replacing tiles with the highest attribution first while monitoring the target class score. Ideally, the target class score reduces strongly in the beginning since highest attributed regions are removed first.</p>
 
 <figure class="image">
-    <img src="../assets/img/restricting-the-flow-review/merf.png" alt="Figure 11: Visualization of the unnormalized MoRF curve on a single, gradually more masked input image on the left starting from the &lt;b&gt;most&lt;/b&gt; attributed regions. A fast decay is expected for a sound attribution method." width=" class=center-imgs" />
+    <img src="../assets/img/restricting-the-flow-review/merf.png" alt="Figure 11: Visualization of the unnormalized MoRF curve on a single, gradually more masked input image on the left starting from the &lt;b&gt;most&lt;/b&gt; attributed regions. A fast decay is expected for a sound attribution method." width="" class="centerimg" />
     <figcaption>
         Figure 11: Visualization of the unnormalized MoRF curve on a single, gradually more masked input image on the left starting from the <b>most</b> attributed regions. A fast decay is expected for a sound attribution method.
     </figcaption>
@@ -369,7 +620,7 @@ I(X,Y) &amp;= H(X)-H(X|Y) \\
 <p>However, it is prone to produce out of distribution samples so a drop in performance may not be related to a relevant input region being removed. To tackle this problem, the LeRF (Least Relevant First) curve (Figure 12) takes the opposite direction and removes the tiles with the lowest attribution scores first. Here, the optimal result would be a slow decrease in target class score since regions deemed unimported by the attribution method are removed first.</p>
 
 <figure class="image">
-    <img src="../assets/img/restricting-the-flow-review/lerf.png" alt="Figure 12: Visualization of the unnormalized LeRF curve on a single, gradually more masked input image on the left starting from the &lt;b&gt;least&lt;/b&gt; attributed regions. A slow decay is expected for a sound attribution method." width=" class=center-imgs" />
+    <img src="../assets/img/restricting-the-flow-review/lerf.png" alt="Figure 12: Visualization of the unnormalized LeRF curve on a single, gradually more masked input image on the left starting from the &lt;b&gt;least&lt;/b&gt; attributed regions. A slow decay is expected for a sound attribution method." width="" class="centerimg" />
     <figcaption>
         Figure 12: Visualization of the unnormalized LeRF curve on a single, gradually more masked input image on the left starting from the <b>least</b> attributed regions. A slow decay is expected for a sound attribution method.
     </figcaption>
@@ -378,14 +629,14 @@ I(X,Y) &amp;= H(X)-H(X|Y) \\
 <p>Based on both scores the paper introduces the degradation score which is the area between MoRF and LeRF curve visualized in Figure 13 and gives single scalar metric which is reported in Table 1. The approach is able to outperform the baselines on this metric for VGG-16 and is competitive for the ResNet-50 model. The readout bottleneck is performing worse than the per-sample bottleneck.</p>
 
 <figure class="image">
-    <img src="../assets/img/restricting-the-flow-review/lerf-morf-curve.png" alt="Figure 13: Visualization of LeRF and MoRF curve as well as the proposed degradation score as the area between both curves." width="50% class=center-imgs" />
+    <img src="../assets/img/restricting-the-flow-review/lerf-morf-curve.png" alt="Figure 13: Visualization of LeRF and MoRF curve as well as the proposed degradation score as the area between both curves." width="50%" class="centerimg" />
     <figcaption>
         Figure 13: Visualization of LeRF and MoRF curve as well as the proposed degradation score as the area between both curves.
     </figcaption>
 </figure>
 
 <figure class="image">
-    <img src="../assets/img/restricting-the-flow-review/table-comparison.png" alt="Table 1: Evaluation results for image degradation metrics on ResNet-50 and VGG-16 for tile sizes of 8x8 and 14x14 in the first two columns and bounding box scores in third column." width=" class=center-imgs" />
+    <img src="../assets/img/restricting-the-flow-review/table-comparison.png" alt="Table 1: Evaluation results for image degradation metrics on ResNet-50 and VGG-16 for tile sizes of 8x8 and 14x14 in the first two columns and bounding box scores in third column." width="" class="centerimg" />
     <figcaption>
         Table 1: Evaluation results for image degradation metrics on ResNet-50 and VGG-16 for tile sizes of 8x8 and 14x14 in the first two columns and bounding box scores in third column.
     </figcaption>
