@@ -1,15 +1,16 @@
 ---
 layout: post
-title: "Practical guide to Diffusion models"
+title: "A practical guide to Diffusion models"
 subtitle: "Implementation of a simple diffusion model on a toy dataset."
 tags: [Generative models, Deep Learning]
 image: 
 ---
 The motivation of this blog post is to provide a intuition and a practical guide to train a (simple) diffusion model {% cite sohl2015deep --file diffusion_practical_guide %} together with the respective code leveraging PyTorch. If you are interested in a more mathematical description with proofs I can highly recommend {% cite luoUnderstandingDiffusionModels2022a --file diffusion_practical_guide %}.
 
+## Diffusion
 In general, the goal of a diffusion model is to be able to generate novel data after being trained on data points of that distribution.
 
-Here, let's consider a simple 2D toy dataset provided by scikit-learn to make this example as simple as possible:
+Here, let's consider a simple 2D toy dataset provided by `scikit-learn` to make this example as simple as possible:
 
 
 {% include image.html url="../assets/img/diffusion_practical_guide_files/dataset.png" description="Figure 1: Two Moons toy dataset used for our experiments." width="50%" %}
@@ -17,13 +18,13 @@ Here, let's consider a simple 2D toy dataset provided by scikit-learn to make th
 Diffusion models define a forward and backward process:
 
 * the forward process gradually adds noise to the data until the original data is indistinguishable (one arrives at a standard normal distribution $N(0, \mathbf{I})$)
-* the backward process aims to reverse the forward process, i.e., start from noise and then gradually try to restore data 
+* the backward process aims to reverse the forward process, i.e., start from noise and then gradually tries to restore data 
 
-One aims to learn the backward process, so one can generate new samples by starting from random noise.
+To generate new samples by starting from random noise, one aims to learn the backward process.
 
-To be able to start training a model that learns this backward process, we need to know how to do the forward process one aims to reverse.
+To be able to start training a model that learns this backward process, we first need to know how to do the forward process.
 
-The Gaussian noise one adds at every step $t$ is controlled by parameters $\beta_t$ that increase as $t \rightarrow T$ so we get random Gaussian noise in the end:
+The forward process adds noise at every step $t$ controlled by parameters $$ \{\beta_t\}_{t=1, \dots, T}, \beta_{t-1} < \beta_t, \beta_T = 1 $$:
 
 $$
 \begin{equation}
@@ -31,7 +32,9 @@ q(x_t \mid x_{t-1}) \sim \mathcal{N}(\sqrt{1 - \beta_t}x_{t-1}, \beta_t \mathbf{
 \end{equation}
 $$
 
-So one can start from our original data samples $x_0$ and then gradually adds noise to the samples.
+As $$t \rightarrow T$$ this distribution becomes a multi-variate Gaussian distribution $$ \mathcal{N}(0, \mathbf{I}) $$.
+
+So one starts with the original data samples $x_0$ and then gradually add noise to the samples:
 
 {% include image.html url="../assets/img/diffusion_practical_guide_files/forward_diffusion.png" description="Figure 2: Forward diffusion process that gradually adds noise." width="110%" %}
 
@@ -82,7 +85,7 @@ For this, one can show that the there is also a closed form for the less noisy v
 
 $$ \tag{1}\label{eq:reverse}
 \begin{equation}
-q(x_{t-1} \mid x_t, x_0) = \mathcal{N}(\mu(x_t, x_0), \sigma_t^2\mathbf{I}
+q(x_{t-1} \mid x_t, x_0) = \mathcal{N}(\mu(x_t, x_0), \sigma_t^2\mathbf{I})
 \end{equation}
 $$
 
@@ -225,13 +228,13 @@ In particular, in the beginning when I started to implement this from the paper 
 
 Further looking into the literature and appendix of the papers revealed some things that brought down the diffusion steps required to $T=10$:
 * It is important to perform linear scaling of the input data into the range $[-1, 1]$. Standardizing the input data (i.e., subtracting the mean and dividing by the standard dev.) as it is usually done for neural networks yielded worse results
-* The Variance schedule (${\beta_t}_t$) ideally has small changes towards $t=0$ such that the noise is not too much for the network to reconstruct, i.e., it learn fine-grained details of the data. This was already discovered in {% cite nichol2021improved --file diffusion_practical_guide %}, however, it is interesting to see that his insight can be shown from a toy dataset already instead of training expensive image models. Fig. 5 shows how the variance of the forward process $1 - \bar{\alpha}_t$ evolves for when $\beta_t$ is set linear (left), or polynomial (right). The right setting works much better in practice since the perturbation of the input does not happen too fast.
+* The variance schedule (${\beta_t}_t$) ideally has small changes towards $t=0$ such that the noise is not too much for the network to reconstruct, i.e., it learn fine-grained details of the data. This was already discovered in {% cite nichol2021improved --file diffusion_practical_guide %}, however, it is interesting to see that his insight can be shown from a toy dataset already instead of training expensive image models. Fig. 5 shows how the variance of the forward process $1 - \bar{\alpha}_t$ evolves for when $\beta_t$ is set linear (left), or polynomial (right). The right setting works much better in practice since the perturbation of the input does not happen too fast.
 
 {% include image.html url="../assets/img/diffusion_practical_guide_files/variance_schedule.png" description="Figure 5: Different variance schedules for the diffusion process." width="100%" %}
 
 Check out the full notebook which this blog post is based on [here](https://gist.github.com/selflein/9bee0818a48966179b18d577a89f792a).
 
-[^1]: This is one possible parameterization of the mean that is most effective based on the experiments in {% cite nichol2021improved --file diffusion_practical_guide %}. {% cite luoUnderstandingDiffusionModels2022a --file diffusion_practical_guide %} summarizes two other paramterizations in the literature, e.g., regressing the mean directly.
+[^1]: This is one possible parameterization of the mean that is most effective based on the experiments in {% cite ho2020denoising --file diffusion_practical_guide %}. {% cite luoUnderstandingDiffusionModels2022a --file diffusion_practical_guide %} summarizes two other paramterizations in the literature, e.g., regressing the mean directly.
 [^2]: Here we treat the variances as fixed. {% cite nichol2021improved --file diffusion_practical_guide %} propose to learn these with an additional objective.
 
 ## References
