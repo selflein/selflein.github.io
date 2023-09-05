@@ -3,7 +3,7 @@ layout: post
 title: "Learning distributions on compact support using Normalizing Flows"
 subtitle: "With some little tricks we can modify any Normalizing Flow model for learning distributions on compact support."
 tags: [Density Estimation, Deep Learning]
-image: 
+image: "normalizing_flow_bounded_domain_files/embedded_compact_dist_thumb.png"
 ---
 
 Normalizing Flows {% cite pmlr-v37-rezende15 --file nf_compact_support %} are powerful density estimators that have shown to be able to learn complex distributions, e.g., of natural images {% cite NEURIPS2018-d139db6a --file nf_compact_support %}. 
@@ -16,7 +16,7 @@ The vanilla formulation of Normalizing Flows {% cite pmlr-v37-rezende15 --file n
 
 Consider a vanilla normalizing flow stacking a set of invertible and differentiable transformations $\\{f_1, \dots, f_n \\}$. After applying common transformations (e.g. radial {% cite pmlr-v37-rezende15 --file nf_compact_support %} or affine coupling {% cite dinh2015nice --file nf_compact_support %} transform) the support of the function is still $\mathbb{R}$. This is visualized in Fig. 1.
 
-{% include image.html url="../assets/img/normalizing_flow_bounded_domain_files/nf.png" description="Figure 1: Common normalizing flow definition transforming a latent Normal distribution into a more complex, target distribution." %}
+{% include image.html url="/assets/img/normalizing_flow_bounded_domain_files/nf.png" description="Figure 1: Common normalizing flow definition transforming a latent Normal distribution into a more complex, target distribution." %}
 
 Now, in order to obtain a distribution with compact support we require a function that is invertible, differentiable (in order to satisfy the constrains within normalizing flows), and additionally we want the function to have a compact co-domain. One such choice, is the logistic function 
 
@@ -26,7 +26,7 @@ $$
 
 which is visualized as transformation in the first part of Fig. 2.
 
-{% include image.html url="../assets/img/normalizing_flow_bounded_domain_files/compact_transform.png" description="Figure 2: Two additional transforms to squash the distribution into the [0, 1] interval and scale and move it afterwards." %}
+{% include image.html url="/assets/img/normalizing_flow_bounded_domain_files/compact_transform.png" description="Figure 2: Two additional transforms to squash the distribution into the [0, 1] interval and scale and move it afterwards." %}
 
 After applying the logistic function, we can use a simple affine transformation $f_{n+2}$ in order to move and scale the support $[0, 1]$ to our desired interval as shown in the second part of Fig. 2.
 
@@ -91,7 +91,7 @@ We can use the `log_prob` function, which takes a datapoint $x$, computes the in
 
 Now, we consider the following 1D example distribution which is a piecewise uniform with support $[1.0, 2.5]$ shown in Fig. 3.
 
-{% include image.html url="../assets/img/normalizing_flow_bounded_domain_files/normalizing_flow_bounded_domain_11_1.png" description="Figure 3: The target distribution we are aiming to learn on data." width="85%" %}
+{% include image.html url="/assets/img/normalizing_flow_bounded_domain_files/normalizing_flow_bounded_domain_11_1.png" description="Figure 3: The target distribution we are aiming to learn on data." width="85%" %}
 
 In order to learn the parameters $\theta$ of the normalizing flow, we can simply maximize the likelihood 
 
@@ -130,7 +130,7 @@ for epoch in epoch_iter:
 
 Finally, we can plot the learned density in Fig. 4. Note that the density is only defined in the interval $[1.0, 2.5]$, however points outside the interval evaluate to $0$ due to clamping by Pyro.
 
-{% include image.html url="../assets/img/normalizing_flow_bounded_domain_files/normalizing_flow_bounded_domain_16_1.png" description="Figure 4: The distribution learned by our normalizing flow model." width="85%" %}
+{% include image.html url="/assets/img/normalizing_flow_bounded_domain_files/normalizing_flow_bounded_domain_16_1.png" description="Figure 4: The distribution learned by our normalizing flow model." width="85%" %}
 
 While the result is not perfect this gives a powerful framework for learning distributions on compact support. One can probably improve the result quite a bit by using more powerful transformations in the "base" flow (in fact one can use any existing invertible and differentiable transformation!) and by increasing the depth of the flow.
 

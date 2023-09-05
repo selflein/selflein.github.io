@@ -3,7 +3,7 @@ layout: post
 title: "A practical guide to Diffusion models"
 subtitle: "Implementation of a simple diffusion model on a toy dataset."
 tags: [Generative models, Deep Learning]
-image: 
+image: "diffusion_practical_guide_files/vectorfield_thumbnail.png"
 ---
 The motivation of this blog post is to provide a intuition and a practical guide to train a (simple) diffusion model {% cite sohl2015deep --file diffusion_practical_guide %} together with the respective code leveraging PyTorch. If you are interested in a more mathematical description with proofs I can highly recommend {% cite luoUnderstandingDiffusionModels2022a --file diffusion_practical_guide %}.
 
@@ -13,7 +13,7 @@ In general, the goal of a diffusion model is to be able to generate novel data a
 Here, let's consider a simple 2D toy dataset provided by `scikit-learn` to make this example as simple as possible:
 
 
-{% include image.html url="../assets/img/diffusion_practical_guide_files/dataset.png" description="Figure 1: Two Moons toy dataset used for our experiments." width="50%" %}
+{% include image.html url="/assets/img/diffusion_practical_guide_files/dataset.png" description="Figure 1: Two Moons toy dataset used for our experiments." width="50%" %}
 
 Diffusion models define a forward and backward process:
 
@@ -36,7 +36,7 @@ As $$t \rightarrow T$$ this distribution becomes a multi-variate Gaussian distri
 
 So one starts with the original data samples $x_0$ and then gradually add noise to the samples:
 
-{% include image.html url="../assets/img/diffusion_practical_guide_files/forward_diffusion.png" description="Figure 2: Forward diffusion process that gradually adds noise." width="110%" %}
+{% include image.html url="/assets/img/diffusion_practical_guide_files/forward_diffusion.png" description="Figure 2: Forward diffusion process that gradually adds noise." width="110%" %}
 
 The cool thing about this being Gaussian noise is that instead of simulating this forward process by iteratively sampling noise, one can derive a closed form for the distribution at a certain $t$ given the original data point $x_0$ so one has to only sample noise once:
 
@@ -212,11 +212,11 @@ class ReverseProcess(ForwardProcess):
 
 Now, let's sample new data points and plot them:
 
-{% include image.html url="../assets/img/diffusion_practical_guide_files/new_samples.png" description="Figure 3: New samples generated from the trained diffusion model." width="50%" %}
+{% include image.html url="/assets/img/diffusion_practical_guide_files/new_samples.png" description="Figure 3: New samples generated from the trained diffusion model." width="50%" %}
 
 We can also inspect the (negative) direction of the predicted noise vector at a particular timestamp $t$ for each position in a grid to visualize the dynamics a sample follows during the reverse process as a vector field:
 
-{% include image.html url="../assets/img/diffusion_practical_guide_files/vectorfield.png" description="Figure 4: Vector field describing reverse process dynamics at different timestamps. The blue line shows the trajectory of a sample during the reverse process." width="100%" %}
+{% include image.html url="/assets/img/diffusion_practical_guide_files/vectorfield.png" description="Figure 4: Vector field describing reverse process dynamics at different timestamps. The blue line shows the trajectory of a sample during the reverse process." width="50%" %}
 
 One can see that as $t \rightarrow 0$ more fine-grained structure emerges that guides the sample to the original data manifold. At $t=T$ samples are guided coarsely towards the center as the signal is still very noisy and hard for the network to predict.
 
@@ -230,7 +230,7 @@ Further looking into the literature and appendix of the papers revealed some thi
 * It is important to perform linear scaling of the input data into the range $[-1, 1]$. Standardizing the input data (i.e., subtracting the mean and dividing by the standard dev.) as it is usually done for neural networks yielded worse results
 * The variance schedule (${\beta_t}_t$) ideally has small changes towards $t=0$ such that the noise is not too much for the network to reconstruct, i.e., it learn fine-grained details of the data. This was already discovered in {% cite nichol2021improved --file diffusion_practical_guide %}, however, it is interesting to see that his insight can be shown from a toy dataset already instead of training expensive image models. Fig. 5 shows how the variance of the forward process $1 - \bar{\alpha}_t$ evolves for when $\beta_t$ is set linear (left), or polynomial (right). The right setting works much better in practice since the perturbation of the input does not happen too fast.
 
-{% include image.html url="../assets/img/diffusion_practical_guide_files/variance_schedule.png" description="Figure 5: Different variance schedules for the diffusion process." width="100%" %}
+{% include image.html url="/assets/img/diffusion_practical_guide_files/variance_schedule.png" description="Figure 5: Different variance schedules for the diffusion process." width="80%" %}
 
 Check out the full notebook which this blog post is based on [here](https://gist.github.com/selflein/9bee0818a48966179b18d577a89f792a).
 

@@ -1,0 +1,107 @@
+---
+layout: default
+title: About
+---
+
+<!-- adapted from https://github.com/jonbarron/website/blob/master/index.html -->
+
+<table style="width:100%;max-width:800px;border:0px;border-spacing:0px;border-collapse:separate;margin-right:auto;margin-left:auto;"><tbody>
+    <!-- About section -->
+    <tr style="padding:0px">
+    <td style="padding:0px">
+        <table style="width:100%;border:0px;border-spacing:0px;border-collapse:separate;margin-right:auto;margin-left:auto;"><tbody>
+        <tr style="padding:0px">
+            <td style="padding:2.5%;width:63%;vertical-align:middle">
+            <p>
+                At argo.ai I've worked on developing machine learning models and uncertainty estimation to safely reason about future actions of other traffic participants for autonomous driving.
+            </p>
+            <p>
+                Before that, I graduated with a <strong>Master's degree in Computer Science</strong> at <a href="https://www.cs.cit.tum.de/en/cs/home/">Technical University of Munich</a>, focusing on machine learning and mathematics. I wrote my thesis at <a href="https://www.cs.cit.tum.de/daml/startseite/">DAML</a> working with <a href="https://www.professoren.tum.de/en/guennemann-stephan">Prof. Günnemann</a>.
+            </p>
+            </td>
+            <td style="padding:2.5%;width:40%;max-width:40%">
+            <img style="width:100%;max-width:100%" alt="profile photo" src="assets/img/profile_img_new_quadratic.jpg">
+            </td>
+        </tr>
+        </tbody></table>
+        <table style="width:100%;border:0px;border-spacing:0px;border-collapse:separate;margin-right:auto;margin-left:auto;"><tbody>
+            <tr>
+            <td style="padding:20px;width:100%;vertical-align:middle">
+            <h2>Research</h2>
+            <p>
+                My research interest lie in the areas of machine learning, uncertainty estimation, and generative models. Currently, I'm interested in an "understanding-through-synthesis" approach, leveraging generative models combined with interpretable priors, e.g., 3D geometry in computer vision and robotics, or physical constraints in drug discovery.
+            </p>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+
+    <!-- Papers -->
+    <table style="width:100%;border:0px;border-spacing:0px;border-collapse:separate;margin-right:auto;margin-left:auto;"><tbody>
+
+
+        <!-- Paper 1 -->
+        <tr onmouseout="ood_ebm_stop()" onmouseover="ood_ebm_start()">
+            <td style="padding:20px;width:25%;vertical-align:middle">
+                <img id="ood_ebm_img" src="assets/img/paper/ood_ebm/no_bottleneck_pooling_density_histogram.png" width="160" height="160" style="border-style: none">
+                <script type="text/javascript">
+                    function ood_ebm_start() {
+                        document.getElementById("ood_ebm_img").src = "assets/img/paper/ood_ebm/bottleneck_pooling_density_histogram.png"
+                    }
+  
+                    function ood_ebm_stop() {
+                        document.getElementById("ood_ebm_img").src = "assets/img/paper/ood_ebm/no_bottleneck_pooling_density_histogram.png"
+                    }
+                    ood_ebm_stop()
+                  </script>
+            </td>
+            <td width="75%" valign="middle">
+            <a href="https://arxiv.org/abs/2107.08785">
+                <span class="papertitle">On Out-of-distribution Detection with Energy-based Models</span>
+            </a>
+            <br>
+            <strong>Sven Elflein</strong>, Bertrand Charpentier, Daniel Zügner, Stephan Günnemann
+            <br>
+            <em>ICML, UDM Workshop</em>, 2021
+            <br>
+            <a href="https://dblp.uni-trier.de/rec/journals/corr/abs-2107-08785.html?view=bibtex">Bibtex</a>
+            <a href="https://daml.in.tum.de/ood-ebm/">Project page</a>
+            <a href="https://github.com/selflein/EBM-OOD-Detection">Code</a>
+            </td>
+        </tr>
+        
+        <!-- Paper 2 -->
+        <tr onmouseout="mgan_stop()" onmouseover="mgan_start()">
+            <td style="padding:20px;width:25%;vertical-align:middle">
+                <img id="mg_gan_img" src="assets/img/paper/mg_gan/single_gen.png" width="160" height="160" style="border-style: none">
+                <script type="text/javascript">
+                    function mgan_start() {
+                        document.getElementById("mg_gan_img").src = "assets/img/paper/mg_gan/multi_gen.png"
+                    }
+  
+                    function mgan_stop() {
+                        document.getElementById("mg_gan_img").src = "assets/img/paper/mg_gan/single_gen.png"
+                    }
+                    mgan_stop()
+                  </script>
+            </td>
+            <td width="75%" valign="middle">
+            <a href="https://arxiv.org/abs/2108.09274">
+                <span class="papertitle">MG-GAN: A Multi-Generator Model Preventing Out-of-Distribution Samples in Pedestrian Trajectory Prediction</span>
+            </a>
+            <br>
+            Patrick Dendorfer*, <strong>Sven Elflein*</strong>, Laura Leal-Taixe
+            <br>
+            <em>ICCV</em>, 2021
+            <br>
+            <a href="https://openaccess.thecvf.com/content/ICCV2021/html/Dendorfer_MG-GAN_A_Multi-Generator_Model_Preventing_Out-of-Distribution_Samples_in_Pedestrian_Trajectory_ICCV_2021_paper.html">Bibtex</a>
+            <a href="https://selflein.github.io/MG-GAN/">Project page</a>
+            <a href="https://github.com/selflein/mg-gan">Code</a>
+            </td>
+        </tr>
+
+
+    </tbody></table>
+    </td>
+    </tr>
+</table>

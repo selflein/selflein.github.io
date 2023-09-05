@@ -4,9 +4,9 @@
 
 body {
   font-family: $serif-font-family;
-  font-size: 18px;
+  font-size: 16px;
   color: $body-color;
-  line-height: 1.75rem;
+  line-height: 1.5rem;
 }
 
 @media (max-width: $elements-responsive-width) {
@@ -20,7 +20,8 @@ body {
 }
 
 h1{
-  font-size: 2rem;
+  font-size: 1.75rem;
+  line-height: 1.8rem;
 }
 
 h1 a {
@@ -70,9 +71,11 @@ table {
   width: 100%;
 }
 
+/*
 table, th, td {
   border: 1px solid black;
 }
+*/
 
 th, td {
   padding: 15px;

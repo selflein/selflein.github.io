@@ -3,7 +3,7 @@ layout: post
 title: "Why did my Neural Network do that?"
 subtitle: "Taking a look at attribution methods, the paper \"Restricting the Flow: Information Bottlenecks for Attribution\", and a try to make it more approachable."
 tags: [Explainability, Attribution methods, Deep Learning]
-image: # "restricting-the-flow-review/thumb2.png"
+image: "restricting-the-flow-review/thumb2.png"
 ---
 
 This is a blog post about the paper "Restricting the Flow: Information Bottlenecks for Attribution" by Karl Schulz, Leon Sixt, Federico Tombari and Tim Landgraf published at ICLR 2020.
@@ -12,7 +12,7 @@ This is a blog post about the paper "Restricting the Flow: Information Bottlenec
 With the current trend to applying Neural Networks to more and more domains, the question on the explainability of these models is getting more attention. While more traditional machine learning approaches like decision trees and Random Forest incorporate some kind of interpretability based on the input features, todays Deep Neural Networks rely on higher dimensional embeddings hardly interpretable by a human. The line of research which can be grouped under the "Attribution" term therefore tries to relate the final output of a Neural Network back to its input by identifying the parts most relevant for decision of the model.
 
 
-{% include image.html url="../assets/img/restricting-the-flow-review/intro-figure.png" description="Figure 1: Attribution map obtained for classification network." %}
+{% include image.html url="/assets/img/restricting-the-flow-review/intro-figure.png" description="Figure 1: Attribution map obtained for classification network." %}
 
 
 The explainability of neural networks is especially relevant for safety-critical applications where security must be considered, e.g., in medical applications where one needs to make sure that the model is relying on features relevant for the classification of condition. Further, employing models in finance leads to a desire for justifiable predictions where one can attribute decision of the model to specific parts of the input data. Finally, attribution maps might help to identify cases where a model is basing its decision on features which do not generalize indicating a bias in the dataset. For example, a model focusing on the presence of rails as the most distinctive feature for classifying an object as a train. Obviously, this will not generalize to images of trains where rails are not present and can be uncovered using attribution methods highlighting the parts of the input the model focuses most on.
@@ -41,7 +41,7 @@ $$
 
 where \\(X\\), \\(Y\\) are random variables and \\(P_X\\), \\(P_Y\\) are the corresponding distributions. This intuitively aligns with the formula for the computation, as the entropy of  minus the entropy of \\(X\\) conditioned on \\(Y\\) and the Kullback-Leibler divergence between the joint and the product of the marginal distributions. An example explaining the concept can be found in Figure 2.
 
-{% include image.html url="../assets/img/restricting-the-flow-review/conditional-entropy.png" description="Figure 2: Example for the drop in uncertainty when observing a second variable indicating that the mutual information between both random variables is high. In other words, observing \(Y\) tells us something about the value \(X\) is going to take." %}
+{% include image.html url="/assets/img/restricting-the-flow-review/conditional-entropy.png" description="Figure 2: Example for the drop in uncertainty when observing a second variable indicating that the mutual information between both random variables is high. In other words, observing \(Y\) tells us something about the value \(X\) is going to take." %}
 
 
 ### Information Bottleneck
@@ -56,7 +56,7 @@ $$
 
 This corresponds to minimizing the information  \\(X\\) and  \\(Z\\) share while maximizing the information  \\(Z\\) and  \\(Y\\) share (Figure 3). Overall this restricts the flow of information between  \\(X\\) and  \\(Y\\), and pushes  \\(Z\\) to "extract" the most important information of  \\(X\\) relevant to  \\(Y\\).
 
-{% include image.html url="../assets/img/restricting-the-flow-review/information-bottleneck-concept.png" description="Figure 3: Conceptual sketch of the information bottleneck where \(Z\) is the random variable used to introduce the botteneck between \(X\) and \(Y\). \(I(Y,Z)\) is to be maximized and \(I(X,Z)\) to be minimized demonstrated by the thickness of the arrows between the random variables." %}
+{% include image.html url="/assets/img/restricting-the-flow-review/information-bottleneck-concept.png" description="Figure 3: Conceptual sketch of the information bottleneck where \(Z\) is the random variable used to introduce the botteneck between \(X\) and \(Y\). \(I(Y,Z)\) is to be maximized and \(I(X,Z)\) to be minimized demonstrated by the thickness of the arrows between the random variables." %}
 
 ## Methodology
 Now that we have the necessary background information to understand the paper let's move to the actual integration of this information bottleneck within Neural Networks to obtain attribution maps.
@@ -64,7 +64,7 @@ Now that we have the necessary background information to understand the paper le
 ### Information Bottleneck in Neural Network
 In order to generate attribution maps the method adopts the information bottleneck for usage in general Neural Network architectures. For this a pretrained Neural Network is considered, e.g., for classification of images. The information bottleneck is then injected at some layer by perturbing the output features with noise, thus restricting the flow information through the network. This process is visualized for a Convolutional Neural Network in Figure 4.
 
-{% include image.html url="../assets/img/restricting-the-flow-review/pipeline-overview.png" description="Figure 4: Construction of the random variable \(Z\) in the information bottleneck within a Neural Network." %}
+{% include image.html url="/assets/img/restricting-the-flow-review/pipeline-overview.png" description="Figure 4: Construction of the random variable \(Z\) in the information bottleneck within a Neural Network." %}
 
 \\(Z \in \mathbb{R}^{h \times w \times c}\\) is constructed by convex combination of the output feature map and Gaussian noise \\(\epsilon \sim N(\mu_R, \Sigma_R)\\) where \\(\mu_R, \Sigma_R\\) are the estimated means and variances of the feature map. This combination is controlled by parameters \\(\lambda \in \mathbb{R}^{h \times w \times c}\\) of the same dimensionality as the feature map. Thus, for \\(\lambda = 0\\) the input to the consecutive layers becomes noise only while for \\(\lambda = 1\\) the feature maps are forwarded unperturbed. Note that since \\(\lambda\\) has the same dimensionality each feature in the feature maps can be blanked out individually which will allow us to estimate the relevance of that particular feature later on.
 
@@ -127,12 +127,12 @@ Remember that the noisy feature map \\(Z \in \mathbb{R}^{h \times w \times c}\\)
 #### Per-sample bottleneck
 The per-sample bottleneck independently operates on a single input image. To parameterize \\(\lambda \in \mathbb{R}^{h \times w \times c}\\) one employs a sigmoid activation on \\(\alpha \in \mathbb{R}^{h \times w \times c}\\) to ensure that the values of \\(\lambda\\) are in the required domain \\([0, 1]\\) and to avoid having to use clipping or projected gradient methods. Afterwards, blurring with a fixed Gaussian kernel is applied to prevent artifacts introduced by pooling operations within the network and ensure smoothness of the attribution mask (Figure 5). One then optimizes \\(L\\) by computing gradients w.r.t. and applying the Adam optimizer. While this allows the per-sample bottleneck to be integrated within an existing pre-trained network without additional training, this requires running the optimization \\(\alpha\\) of for every new input sample.
 
-{% include image.html url="../assets/img/restricting-the-flow-review/per-sample-bottleneck.png" description="Figure 5: Conceptual visualization of Per-sample bottleneck." %}
+{% include image.html url="/assets/img/restricting-the-flow-review/per-sample-bottleneck.png" description="Figure 5: Conceptual visualization of Per-sample bottleneck." %}
 
 #### Readout bottleneck
 In the readout bottleneck a second neural network is trained to directly regress \\(\alpha\\) on the entire dataset while sigmoid activation and blurring remain identical to the per-sample bottleneck. The readout network takes multi-scale features from the pretrained network which are resized to the same size and processed using a series of 1x1 convolutions. It is visualized in Figure 6. This approach requires training a second network for the task, however, during inference no additional optimization is necessary.
 
-{% include image.html url="../assets/img/restricting-the-flow-review/readout-bottleneck.png" description="Figure 6: Conceptual visualization of Readout bottleneck." %}
+{% include image.html url="/assets/img/restricting-the-flow-review/readout-bottleneck.png" description="Figure 6: Conceptual visualization of Readout bottleneck." %}
 
 Finally, after having obtained \\(\lambda\\) one can obtain the attribution map for each spatial position by summing over the channels:
 
@@ -170,9 +170,9 @@ For baselines the following approaches are considered:
 
 The paper first qualitatively studies the effect of inserting the bottleneck at different depths within the network which is visualized for VGG-16 in the bottom row of Figure 7. As feature map sizes shrink and the estimated attribution map has the same size as the feature map, the attribution map upscaled to the original image resolution becomes less and less localized at later layers. Secondly, qualitative results for different settings of \\(\beta\\) are visualized in the top row of Figure 7. One can observe that for higher values of \\(\beta\\) less information can pass through the bottleneck and thus the attribution is more localized on the relevant input regions. However, if \\(\beta\\) is set to high no information is let through and no attribution map can be obtained. Figure 8 shows a visual comparison of the attribution maps produced by different methods.
 
-{% include image.html url="../assets/img/restricting-the-flow-review/comparision_hyperparameters.png" description="Figure 7: Top row compares attribution maps for different settings of the hyperparameter \(\beta\). Bottom row shows comparison of attribution map when inserting the bottleneck at different depths. The unit of the scale on the right of each image is bits." %}
+{% include image.html url="/assets/img/restricting-the-flow-review/comparision_hyperparameters.png" description="Figure 7: Top row compares attribution maps for different settings of the hyperparameter \(\beta\). Bottom row shows comparison of attribution map when inserting the bottleneck at different depths. The unit of the scale on the right of each image is bits." %}
 
-{% include image.html url="../assets/img/restricting-the-flow-review/comparison_methods.png" description="Figure 8: Comparison of attribution maps produced by baselines and the proposed approach with per-sample and readout bottleneck." %}
+{% include image.html url="/assets/img/restricting-the-flow-review/comparison_methods.png" description="Figure 8: Comparison of attribution maps produced by baselines and the proposed approach with per-sample and readout bottleneck." %}
 
 
 ### Quantitative Results
@@ -185,9 +185,9 @@ In order to verify that the attribution maps produced by a method depend on the 
 #### Sensitivity-N
 Sensitivity-N measures the correlation between the removed attribution mass and drop in performance of the network when randomly masking N pixels of the input image (as demonstrated conceptually in Figure 9). Intuitively, if a attribution method is performing well it should assign high attribution scores to regions relevant for the final output and when removing these parts the network performance should drop more heavily than when removing inputs with low attribution. The results for Sensitivity-N for different amounts of removed pixels and tile sizes can be found in the bottom row of Figure 10. Since when only masking tiles of size 1x1 at a time does not provide distinguishable results, the authors also add results when removing tiles of size 8x8. Here the proposed methods outperform the baselines when more than 2% of pixels are masked. The high performance of the Occlusion baseline for small amounts of replaced pixels is a result for this method exactly using the strategy of replacing pixels of a certain small tile size and measuring the drop in performance to asses the attribution score of this region.
 
-{% include image.html url="../assets/img/restricting-the-flow-review/sensitivity-n.png" description="Figure 9: Example of two removed tiles from a input image on the left and the respective sum of attribution removed versus the change in logit score of the target class plotted on the right. Sensitivity-N measures the correlation between both quantities when removing tiles with size of in total N pixels." %}
+{% include image.html url="/assets/img/restricting-the-flow-review/sensitivity-n.png" description="Figure 9: Example of two removed tiles from a input image on the left and the respective sum of attribution removed versus the change in logit score of the target class plotted on the right. Sensitivity-N measures the correlation between both quantities when removing tiles with size of in total N pixels." %}
 
-{% include image.html url="../assets/img/restricting-the-flow-review/paper-results-sanity-check-sens-n.png" description="Figure 10: Top row shows results of the sanity check for ResNet-50 and VGG-16. The bottom row plots Sensitivity-N results for increasing amounts of replaced pixels with tile sizes of 1x1 and 8x8." %}
+{% include image.html url="/assets/img/restricting-the-flow-review/paper-results-sanity-check-sens-n.png" description="Figure 10: Top row shows results of the sanity check for ResNet-50 and VGG-16. The bottom row plots Sensitivity-N results for increasing amounts of replaced pixels with tile sizes of 1x1 and 8x8." %}
 
 
 #### Bounding Box
@@ -197,18 +197,18 @@ As an additional metric the paper proposes to use bounding boxes provided with p
 #### Image Degradation
 Image degradation metrics works in a similar way to Sensitivity-N however it takes a more structured approach in removing tiles from the image. The MoRF (Most Relevant First) curve (Figure 11) is computed by replacing tiles with the highest attribution first while monitoring the target class score. Ideally, the target class score reduces strongly in the beginning since highest attributed regions are removed first. 
 
-{% include image.html url="../assets/img/restricting-the-flow-review/merf.png" description="Figure 11: Visualization of the unnormalized MoRF curve on a single, gradually more masked input image on the left starting from the <b>most</b> attributed regions. A fast decay is expected for a sound attribution method." %}
+{% include image.html url="/assets/img/restricting-the-flow-review/merf.png" description="Figure 11: Visualization of the unnormalized MoRF curve on a single, gradually more masked input image on the left starting from the <b>most</b> attributed regions. A fast decay is expected for a sound attribution method." %}
 
 However, it is prone to produce out of distribution samples so a drop in performance may not be related to a relevant input region being removed. To tackle this problem, the LeRF (Least Relevant First) curve (Figure 12) takes the opposite direction and removes the tiles with the lowest attribution scores first. Here, the optimal result would be a slow decrease in target class score since regions deemed unimported by the attribution method are removed first. 
 
-{% include image.html url="../assets/img/restricting-the-flow-review/lerf.png" description="Figure 12: Visualization of the unnormalized LeRF curve on a single, gradually more masked input image on the left starting from the <b>least</b> attributed regions. A slow decay is expected for a sound attribution method." %}
+{% include image.html url="/assets/img/restricting-the-flow-review/lerf.png" description="Figure 12: Visualization of the unnormalized LeRF curve on a single, gradually more masked input image on the left starting from the <b>least</b> attributed regions. A slow decay is expected for a sound attribution method." %}
 
 Based on both scores the paper introduces the degradation score which is the area between MoRF and LeRF curve visualized in Figure 13 and gives single scalar metric which is reported in Table 1. The approach is able to outperform the baselines on this metric for VGG-16 and is competitive for the ResNet-50 model. The readout bottleneck is performing worse than the per-sample bottleneck.
 
 
-{% include image.html url="../assets/img/restricting-the-flow-review/lerf-morf-curve.png" description="Figure 13: Visualization of LeRF and MoRF curve as well as the proposed degradation score as the area between both curves." width="50%" %}
+{% include image.html url="/assets/img/restricting-the-flow-review/lerf-morf-curve.png" description="Figure 13: Visualization of LeRF and MoRF curve as well as the proposed degradation score as the area between both curves." width="50%" %}
 
-{% include image.html url="../assets/img/restricting-the-flow-review/table-comparison.png" description="Table 1: Evaluation results for image degradation metrics on ResNet-50 and VGG-16 for tile sizes of 8x8 and 14x14 in the first two columns and bounding box scores in third column." %}
+{% include image.html url="/assets/img/restricting-the-flow-review/table-comparison.png" description="Table 1: Evaluation results for image degradation metrics on ResNet-50 and VGG-16 for tile sizes of 8x8 and 14x14 in the first two columns and bounding box scores in third column." %}
 
 
 ## Conclusion

@@ -3,19 +3,21 @@ layout: default
 ---
 
 {% for post in paginator.posts %}
-  <div class="posts-container">
-    <h1>
-      <a href="{{ site.github.url }}{{ post.url }}">{{ post.title }}</a>
-    </h1>
+  <div class="posts-container" href="{{ site.github.url }}{{ post.url }}">
     {% if post.image %}
       <div class="thumbnail-container">
-        <a href="{{ site.github.url }}{{ post.url }}"><img src="{{ site.github.url }}/assets/img/{{ post.image }}"></a>
+        <a href="{{ site.github.url }}{{ post.url }}"><img src="/assets/img/{{ post.image }}"></a>
       </div>
     {% endif %}
-    <p>
-      {{ post.subtitle }} <a href="{{ site.github.url }}{{ post.url }}">Read more</a>
-      <span class="post-date"><i class="fa fa-calendar" aria-hidden="true"></i> {{ post.date | date_to_string }} - <i class="fa fa-clock-o" aria-hidden="true"></i> {% include read-time.html %}</span>
-    </p>
+    <div>
+      <h1>
+        <a href="{{ site.github.url }}{{ post.url }}">{{ post.title }}</a>
+      </h1>
+      <p>
+        {{ post.subtitle }}
+        <span class="post-date"><i class="fa fa-calendar" aria-hidden="true"></i> {{ post.date | date_to_string }} - <i class="fa fa-clock-o" aria-hidden="true"></i> {% include read-time.html %}</span>
+      </p>
+    </div>
   </div>
 {% endfor %}
 <!-- Pagination links -->
