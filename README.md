@@ -1,6 +1,10 @@
 ## Setup
 
 ```
+brew install rbenv
+eval "$(rbenv init -)"  # For the current session
+rbenv install 3.0.0
+rbenv global 3.0.0
 gem install jekyll bundler
 bundle config set --local path 'vendor/bundle'
 bundle install
