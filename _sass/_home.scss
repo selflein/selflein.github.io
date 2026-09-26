@@ -27,6 +27,74 @@
 }
 
 /*
+  Publications
+*/
+
+.publications {
+  table-layout: fixed;
+}
+
+.publications .publication-thumbnail {
+  box-sizing: border-box;
+  padding: 20px;
+  width: 200px;
+  vertical-align: middle;
+}
+
+.publication-thumbnail img,
+.publication-thumbnail video {
+  display: block;
+  position: relative;
+  width: 160px;
+  max-width: 100%;
+  height: auto;
+  border-radius: 5px;
+  transform-origin: 75% center;
+  transition: transform 180ms ease;
+}
+
+@media (hover: hover) {
+  .publications tr:hover .publication-thumbnail img,
+  .publications tr:hover .publication-thumbnail video {
+    transform: scale(1.5);
+    z-index: 1;
+  }
+}
+
+.publication-award {
+  color: #c62828;
+  font-weight: bold;
+}
+
+.publication-details {
+  vertical-align: middle;
+  overflow-wrap: break-word;
+}
+
+@media (max-width: 600px) {
+  .publications,
+  .publications tbody,
+  .publications tr,
+  .publications td {
+    display: block;
+  }
+
+  .publications .publication-thumbnail {
+    width: 100%;
+    padding-bottom: 0;
+  }
+
+  .publications .publication-details {
+    padding: 20px;
+  }
+
+  .publication-thumbnail img,
+  .publication-thumbnail video {
+    transform-origin: left bottom;
+  }
+}
+
+/*
   Pagination
 */
 

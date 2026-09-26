@@ -13,7 +13,7 @@ title: About
         <tr style="padding:0px">
             <td style="padding:2.5%;width:63%;vertical-align:middle">
             <p>
-                I am a first-year PhD student at the <a href="https://www.utoronto.ca/">University of Toronto</a>, supervised by <a href="https://www.cs.utoronto.ca/~fidler/">Sanja Fidler</a> (<a href="https://research.nvidia.com/labs/toronto-ai/">Toronto AI Lab</a>) and <a href="https://research.nvidia.com/labs/dvl/author/laura-leal-taixe/">Laura Leal-Taixé</a>(<a href="https://research.nvidia.com/labs/dvl/">DVL</a>).
+                I am a third-year PhD student at the <a href="https://www.utoronto.ca/">University of Toronto</a>, supervised by <a href="https://www.cs.utoronto.ca/~fidler/">Sanja Fidler</a> (<a href="https://research.nvidia.com/labs/toronto-ai/">Toronto AI Lab</a>) and <a href="https://research.nvidia.com/labs/dvl/author/laura-leal-taixe/">Laura Leal-Taixé</a>(<a href="https://research.nvidia.com/labs/dvl/">DVL</a>).
             </p>
             <p>
                 Before that I've worked on machine learning models and uncertainty estimation to reason about future actions of other traffic participants for autonomous driving at <a href="https://en.wikipedia.org/wiki/Argo_AI">Argo AI (RIP)</a>.
@@ -40,55 +40,196 @@ title: About
     </table>
 
     <!-- Papers -->
-    <table style="width:100%;border:0px;border-spacing:0px;border-collapse:separate;margin-right:auto;margin-left:auto;"><tbody>
+    <table class="publications" style="width:100%;border:0px;border-spacing:0px;border-collapse:separate;margin-right:auto;margin-left:auto;"><tbody>
 
-
-        <!-- Paper 1 -->
-        <tr onmouseout="ood_ebm_stop()" onmouseover="ood_ebm_start()">
-            <td style="padding:20px;width:25%;vertical-align:middle">
-                <img id="ood_ebm_img" src="assets/img/paper/ood_ebm/no_bottleneck_pooling_density_histogram.png" width="160" height="160" style="border-style: none">
-                <script type="text/javascript">
-                    function ood_ebm_start() {
-                        document.getElementById("ood_ebm_img").src = "assets/img/paper/ood_ebm/bottleneck_pooling_density_histogram.png"
-                    }
-  
-                    function ood_ebm_stop() {
-                        document.getElementById("ood_ebm_img").src = "assets/img/paper/ood_ebm/no_bottleneck_pooling_density_histogram.png"
-                    }
-                    ood_ebm_stop()
-                  </script>
+        <!-- worldtrace -->
+        <tr>
+            <td class="publication-thumbnail">
+                <video loop muted playsinline preload="none" width="160" poster="assets/img/paper/worldtrace/preview.jpg" aria-label="WorldTrace generated scene with a returning camera pan">
+                    <source src="assets/img/paper/worldtrace/demo.mp4" type="video/mp4">
+                    <a href="assets/img/paper/worldtrace/demo.mp4">Watch the demo</a>
+                </video>
             </td>
-            <td width="75%" valign="middle">
-            <a href="https://arxiv.org/abs/2107.08785">
-                <span class="papertitle">On Out-of-distribution Detection with Energy-based Models</span>
+            <td class="publication-details">
+            <a href="https://arxiv.org/abs/2608.07408">
+                <span class="papertitle">Addressable Memory for Video World Models</span>
             </a>
             <br>
-            <strong>Sven Elflein</strong>, Bertrand Charpentier, Daniel Zügner, Stephan Günnemann
+            Xindi Wu, <strong>Sven Elflein</strong>, James Lucas, Olga Russakovsky, Laura Leal-Taixé, Despoina Paschalidou, Jonathan Lorraine, Aljoša Ošep
             <br>
-            <em>ICML, UDM Workshop</em>, 2021
+            <!-- 7,900 / 30,709 submissions: https://jiangpenghe.github.io/ (September 24, 2026). -->
+            <em>NeurIPS</em>, 2026
             <br>
-            <a href="https://dblp.uni-trier.de/rec/journals/corr/abs-2107-08785.html?view=bibtex">Bibtex</a>
-            <a href="https://daml.in.tum.de/ood-ebm/">Project page</a>
-            <a href="https://github.com/selflein/EBM-OOD-Detection">Code</a>
+            <a href="https://research.nvidia.com/labs/sil/projects/WorldTrace/">Project page</a>
             </td>
         </tr>
-        
+
+        <!-- flowbender -->
+        <tr>
+            <td class="publication-thumbnail">
+                <video loop muted playsinline preload="none" width="160" poster="assets/img/paper/flowbender/preview.jpg" aria-label="FlowBender textured 3D object generation">
+                    <source src="assets/img/paper/flowbender/demo.mp4" type="video/mp4">
+                    <a href="assets/img/paper/flowbender/demo.mp4">Watch the demo</a>
+                </video>
+            </td>
+            <td class="publication-details">
+            <a href="https://arxiv.org/abs/2606.20404">
+                <span class="papertitle">FlowBender: Feedback-Aware Training for Self-Correcting Conditional Flows</span>
+            </a>
+            <br>
+            Daniel Gilo, <strong>Sven Elflein</strong>, Ido Sobol, Or Litany
+            <br>
+            <em>arXiv</em>, 2026
+            <br>
+            <a href="https://flow-bender.github.io/">Project page</a>
+            <a href="https://github.com/DanielGilo/FlowBender">Code</a>
+            </td>
+        </tr>
+
+        <!-- deja_view -->
+        <tr>
+            <td class="publication-thumbnail">
+                <video loop muted playsinline preload="none" width="160" poster="assets/img/paper/deja_view/preview.jpg" aria-label="Déjà View 3D reconstruction of the NVIDIA campus">
+                    <source src="assets/img/paper/deja_view/demo.mp4" type="video/mp4">
+                    <a href="assets/img/paper/deja_view/demo.mp4">Watch the demo</a>
+                </video>
+            </td>
+            <td class="publication-details">
+            <a href="https://arxiv.org/abs/2605.30215">
+                <span class="papertitle">Déjà View: Looping Transformers for Multi-View 3D Reconstruction</span>
+            </a>
+            <br>
+            Alessandro Burzio, Tobias Fischer, <strong>Sven Elflein</strong>, Qunjie Zhou, Riccardo de Lutio, Jiawei Ren, Jiahui Huang, Shengyu Huang, Marc Pollefeys, Laura Leal-Taixé, Zan Gojcic, Haithem Turki
+            <br>
+            <!-- 112 / 30,709 submissions: https://csiagentgroup.com/ (September 25, 2026). -->
+            <em>NeurIPS</em>, 2026 — <span class="publication-award">Oral (top 0.36% of submissions)</span>
+            <br>
+            <a href="https://research.nvidia.com/labs/dvl/projects/dvlt/">Project page</a>
+            <a href="https://github.com/nv-tlabs/dvlt">Code</a>
+            </td>
+        </tr>
+
+        <!-- VGG-T3 -->
+        <tr>
+            <td class="publication-thumbnail">
+                <video loop muted playsinline preload="none" width="160" poster="assets/img/paper/vgg_t3/map.jpg" aria-label="VGG-T³ visual localization in the Wayspots Map scene">
+                    <source src="assets/img/paper/vgg_t3/map.mp4" type="video/mp4">
+                    <a href="assets/img/paper/vgg_t3/map.mp4">Watch the VGG-T³ visual localization demo</a>
+                </video>
+            </td>
+            <td class="publication-details">
+            <a href="https://arxiv.org/abs/2602.23361">
+                <span class="papertitle">VGG-T<sup>3</sup>: Offline Feed-Forward 3D Reconstruction at Scale</span>
+            </a>
+            <br>
+            <strong>Sven Elflein</strong>, Ruilong Li, Sérgio Agostinho, Zan Gojcic, Laura Leal-Taixé, Qunjie Zhou, Aljosa Osep
+            <br>
+            <em>CVPR</em>, 2026
+            <br>
+            <a href="https://github.com/nv-dvl/vgg-ttt#citation">Bibtex</a>
+            <a href="https://research.nvidia.com/labs/dvl/projects/vgg-ttt/">Project page</a>
+            <a href="https://github.com/nv-dvl/vgg-ttt">Code</a>
+            </td>
+        </tr>
+
+        <!-- tttla -->
+        <tr>
+            <td class="publication-thumbnail">
+                <img src="assets/img/paper/tttla/preview.png" width="160" alt="Effect of test-time inner-loop iterations on performance" loading="lazy">
+            </td>
+            <td class="publication-details">
+            <a href="https://arxiv.org/abs/2602.21204">
+                <span class="papertitle">Test-Time Training with KV Binding Is Secretly Linear Attention</span>
+            </a>
+            <br>
+            Junchen Liu, <strong>Sven Elflein</strong>, Or Litany, Zan Gojcic, Ruilong Li
+            <br>
+            <em>ICML</em>, 2026
+            <br>
+            <a href="https://research.nvidia.com/labs/sil/projects/tttla/">Project page</a>
+            <a href="https://github.com/nv-tlabs/tttla">Code</a>
+            </td>
+        </tr>
+
+        <!-- long_perceptual_thoughts -->
+        <tr>
+            <td class="publication-thumbnail">
+                <img src="assets/img/paper/long_perceptual_thoughts/preview.png" width="160" alt="LongPerceptualThoughts data synthesis pipeline" loading="lazy">
+            </td>
+            <td class="publication-details">
+            <a href="https://arxiv.org/abs/2504.15362">
+                <span class="papertitle">LongPerceptualThoughts: Distilling System-2 Reasoning for System-1 Perception</span>
+            </a>
+            <br>
+            Yuan-Hong Liao, <strong>Sven Elflein</strong>, Liu He, Laura Leal-Taixé, Yejin Choi, Sanja Fidler, David Acuna
+            <br>
+            <em>COLM</em>, 2025
+            <br>
+            <a href="https://andrewliao11.github.io/LongPerceptualThoughts/">Project page</a>
+            <a href="https://github.com/andrewliao11/LongPerceptualThoughts">Code</a>
+            </td>
+        </tr>
+
+        <!-- Light3R-SfM -->
+        <tr>
+            <td class="publication-thumbnail">
+                <video loop muted playsinline preload="none" width="160" poster="assets/img/paper/light3r_sfm/preview.jpg" aria-label="Light3R-SfM 3D reconstruction demo">
+                    <source src="assets/img/light3r_sfm.mp4" type="video/mp4">
+                    <a href="assets/img/light3r_sfm.mp4">Watch the Light3R-SfM reconstruction demo</a>
+                </video>
+            </td>
+            <td class="publication-details">
+            <a href="https://arxiv.org/abs/2501.14914">
+                <span class="papertitle">Light3R-SfM: Towards Feed-forward Structure-from-Motion</span>
+            </a>
+            <br>
+            <strong>Sven Elflein</strong>, Qunjie Zhou, Sérgio Agostinho, Laura Leal-Taixé
+            <br>
+            <!-- 387 highlights / 13,008 submissions: https://media.eventhosts.cc/Conferences/CVPR2025/CVPR_Workshops_Tutorials_2025.pdf -->
+            <em>CVPR</em>, 2025 — <span class="publication-award">Spotlight (top 3% of submissions)</span>
+            <br>
+            <a href="https://selflein.github.io/Light3R/">Project page</a>
+            </td>
+        </tr>
+
+        <!-- matcha -->
+        <tr>
+            <td class="publication-thumbnail">
+                <video loop muted playsinline preload="none" width="160" poster="assets/img/paper/matcha/preview.jpg" aria-label="MATCHA temporal feature tracking">
+                    <source src="assets/img/paper/matcha/demo.mp4" type="video/mp4">
+                    <a href="assets/img/paper/matcha/demo.mp4">Watch the demo</a>
+                </video>
+            </td>
+            <td class="publication-details">
+            <a href="https://arxiv.org/abs/2501.14945">
+                <span class="papertitle">MATCHA: Towards Matching Anything</span>
+            </a>
+            <br>
+            Fei Xue, <strong>Sven Elflein</strong>, Laura Leal-Taixé, Qunjie Zhou
+            <br>
+            <em>CVPR (Highlight)</em>, 2025
+            <br>
+            <a href="https://feixue94.github.io/matcha-project/">Project page</a>
+            <a href="https://github.com/nv-dvl/matcha">Code</a>
+            </td>
+        </tr>
+
         <!-- Paper 2 -->
         <tr onmouseout="mgan_stop()" onmouseover="mgan_start()">
-            <td style="padding:20px;width:25%;vertical-align:middle">
-                <img id="mg_gan_img" src="assets/img/paper/mg_gan/single_gen.png" width="160" height="160" style="border-style: none">
+            <td class="publication-thumbnail">
+                <img id="mg_gan_img" src="assets/img/paper/mg_gan/single_gen.png" width="160" style="border-style: none">
                 <script type="text/javascript">
                     function mgan_start() {
                         document.getElementById("mg_gan_img").src = "assets/img/paper/mg_gan/multi_gen.png"
                     }
-  
+
                     function mgan_stop() {
                         document.getElementById("mg_gan_img").src = "assets/img/paper/mg_gan/single_gen.png"
                     }
                     mgan_stop()
                   </script>
             </td>
-            <td width="75%" valign="middle">
+            <td class="publication-details">
             <a href="https://arxiv.org/abs/2108.09274">
                 <span class="papertitle">MG-GAN: A Multi-Generator Model Preventing Out-of-Distribution Samples in Pedestrian Trajectory Prediction</span>
             </a>
@@ -103,8 +244,49 @@ title: About
             </td>
         </tr>
 
+        <!-- Paper 1 -->
+        <tr onmouseout="ood_ebm_stop()" onmouseover="ood_ebm_start()">
+            <td class="publication-thumbnail">
+                <img id="ood_ebm_img" src="assets/img/paper/ood_ebm/no_bottleneck_pooling_density_histogram.png" width="160" style="border-style: none">
+                <script type="text/javascript">
+                    function ood_ebm_start() {
+                        document.getElementById("ood_ebm_img").src = "assets/img/paper/ood_ebm/bottleneck_pooling_density_histogram.png"
+                    }
+
+                    function ood_ebm_stop() {
+                        document.getElementById("ood_ebm_img").src = "assets/img/paper/ood_ebm/no_bottleneck_pooling_density_histogram.png"
+                    }
+                    ood_ebm_stop()
+                  </script>
+            </td>
+            <td class="publication-details">
+            <a href="https://arxiv.org/abs/2107.08785">
+                <span class="papertitle">On Out-of-distribution Detection with Energy-based Models</span>
+            </a>
+            <br>
+            <strong>Sven Elflein</strong>, Bertrand Charpentier, Daniel Zügner, Stephan Günnemann
+            <br>
+            <em>ICML, UDM Workshop</em>, 2021
+            <br>
+            <a href="https://dblp.uni-trier.de/rec/journals/corr/abs-2107-08785.html?view=bibtex">Bibtex</a>
+            <a href="https://daml.in.tum.de/ood-ebm/">Project page</a>
+            <a href="https://github.com/selflein/EBM-OOD-Detection">Code</a>
+            </td>
+        </tr>
 
     </tbody></table>
     </td>
     </tr>
 </table>
+
+<script>
+    document.querySelectorAll('.publications video').forEach(function (video) {
+        var row = video.closest('tr');
+        row.addEventListener('mouseenter', function () {
+            video.play().catch(function () {});
+        });
+        row.addEventListener('mouseleave', function () {
+            video.pause();
+        });
+    });
+</script>
